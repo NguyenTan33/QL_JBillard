@@ -1,0 +1,25 @@
+## Build and Output Folders
+bin/
+obj/
+publish/
+figma_build/
+
+## Visual Studio & Rider
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+## SQLite Database & Backups
+*.db
+*.db-shm
+*.db-wal
+*.enc
+AppData/
+Backups/
+
+## Temporary and Test Logs
+*.log
+*.tmp
+commit_history.ps1
