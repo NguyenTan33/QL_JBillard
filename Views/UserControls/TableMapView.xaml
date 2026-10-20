@@ -1,0 +1,143 @@
+<UserControl x:Class="QL_JBillard.Views.UserControls.TableMapView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:QL_JBillard.Views.UserControls"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1100"
+             Background="{StaticResource BgDarkBrush}">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Top Summary Bar (Thống Kê Chỉ Số Toàn Quán Thời Gian Thực) -->
+        <Border Grid.Row="0" Background="#FFFFFF" CornerRadius="10" Padding="16,12" Margin="0,0,0,16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Thống kê trạng thái bàn nhanh (Màu sáng tương phản cao) -->
+                <WrapPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Tổng số bàn -->
+                    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Fill="#3B82F6" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock Text="TỔNG SỐ BÀN: " FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding TotalTableCount}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Đang có khách -->
+                    <Border Background="#FFF1F2" BorderBrush="#FECDD3" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Fill="#E11D48" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock Text="ĐANG CHƠI: " FontSize="12" FontWeight="Bold" Foreground="#E11D48" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding OccupiedTableCount}" FontSize="13" FontWeight="Bold" Foreground="#BE123C" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Bàn trống -->
+                    <Border Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Fill="#059669" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock Text="BÀN TRỐNG: " FontSize="12" FontWeight="Bold" Foreground="#059669" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding AvailableTableCount}" FontSize="13" FontWeight="Bold" Foreground="#047857" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Đã đặt bàn -->
+                    <Border Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="8" Height="8" Fill="#D97706" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock Text="ĐÃ ĐẶT: " FontSize="12" FontWeight="Bold" Foreground="#D97706" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ReservedTableCount}" FontSize="13" FontWeight="Bold" Foreground="#B45309" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Bảo trì -->
+                    <Border Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🛠️ BẢO TRÌ: " FontSize="12" FontWeight="Bold" Foreground="#D97706" />
+                            <TextBlock Text="{Binding MaintenanceTableCount}" FontSize="13" FontWeight="Bold" Foreground="#B45309" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Tạm tính tiền giờ & dịch vụ realtime -->
+                    <Border Background="#F5F3FF" BorderBrush="#DDD6FE" BorderThickness="1" CornerRadius="8" Padding="12,6" Margin="0,0,10,6">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="💰 TỔNG TẠM TÍNH: " FontSize="12" FontWeight="Bold" Foreground="#7C3AED" />
+                            <TextBlock Text="{Binding TotalLiveRevenue, Converter={StaticResource CurrencyConverter}}" FontSize="13" FontWeight="Bold" Foreground="#6D28D9" />
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+
+                <!-- Nút Làm Mới -->
+                <Button Grid.Column="1" Content="🔄 Làm Mới Dữ Liệu" Style="{StaticResource SecondaryButton}" 
+                        Command="{Binding LoadDataCommand}" Height="34" VerticalAlignment="Top" />
+            </Grid>
+        </Border>
+
+        <!-- 2. Filter Bar: Thanh Công Cụ Lọc Đồng Bộ, Chuẩn Mực -->
+        <Border Grid.Row="1" Background="#FFFFFF" CornerRadius="10" Padding="16,10" Margin="0,0,0,16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+            </Border.Effect>
+            <WrapPanel VerticalAlignment="Center">
+                <!-- Tìm kiếm bàn -->
+                <TextBlock Text="TÌM BÀN:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" Width="160" Height="34" Margin="0,0,14,0" Padding="10,0" 
+                         VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" FontWeight="SemiBold" />
+
+                <!-- Lọc Tầng -->
+                <TextBlock Text="TẦNG:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <ComboBox ItemsSource="{Binding Floors}" SelectedItem="{Binding SelectedFloor}" DisplayMemberPath="FloorName" 
+                          Width="160" Height="34" Margin="0,0,14,0" />
+
+                <!-- Lọc Khu vực -->
+                <TextBlock Text="KHU VỰC:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <ComboBox ItemsSource="{Binding Areas}" SelectedItem="{Binding SelectedArea}" DisplayMemberPath="AreaName" 
+                          Width="180" Height="34" Margin="0,0,14,0" />
+
+                <!-- Lọc Trạng Thái -->
+                <TextBlock Text="TRẠNG THÁI:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding FilterStatus}" Width="140" Height="34" Margin="0,0,14,0">
+                    <ComboBoxItem Content="Tất Cả Bàn" Tag="ALL" IsSelected="True" />
+                    <ComboBoxItem Content="Bàn Trống" Tag="AVAILABLE" />
+                    <ComboBoxItem Content="Đang Chơi" Tag="OCCUPIED" />
+                    <ComboBoxItem Content="Đã Đặt Bàn" Tag="RESERVED" />
+                    <ComboBoxItem Content="Đang Bảo Trì" Tag="MAINTENANCE" />
+                </ComboBox>
+
+                <!-- Bỏ lọc -->
+                <Button Content="Xóa Bộ Lọc" Style="{StaticResource SecondaryButton}" Height="34" Padding="12,0"
+                        Command="{Binding ClearAreaFilterCommand}" />
+            </WrapPanel>
+        </Border>
+
+        <!-- 3. Sơ đồ các bàn (Grid các Card Bàn) -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding FilteredTables}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <local:TableCardControl Width="255" Height="285" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
