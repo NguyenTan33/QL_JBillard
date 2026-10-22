@@ -1,0 +1,81 @@
+<Window x:Class="QL_JBillard.Views.Dialogs.SwitchTableDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Quản lý hệ thống bida - Chuyển Bàn Chơi" 
+        Icon="pack://application:,,,/Resources/app_icon.png"
+        Width="520" SizeToContent="Height" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource BgDarkBrush}">
+    
+    <Border Padding="20">
+        <Border Background="#FFFFFF" CornerRadius="12" Padding="24" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="12" Direction="270" Opacity="0.08" ShadowDepth="4" Color="Black" />
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0">
+                    <TextBlock Text="CHUYỂN PHIÊN CHƠI SANG BÀN MỚI" FontSize="16" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" Margin="0,0,0,16" />
+
+                    <Grid Margin="0,0,0,14">
+                        <TextBlock Text="Bàn hiện tại đang chơi:" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding FromTable.TableNumber, StringFormat='{}{0}'}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <TextBlock Text="CHỌN BÀN TRỐNG ĐÍCH MUỐN CHUYỂN SANG (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5" />
+                    <ComboBox ItemsSource="{Binding AvailableTables}" SelectedItem="{Binding SelectedTargetTable}" 
+                              Height="40" Margin="0,0,0,14" Foreground="#000000">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding TableNumber}" FontWeight="Bold" Foreground="#000000" />
+                                    <TextBlock Text="{Binding TableType.TypeName, StringFormat=' - {0}'}" Foreground="#475569" Margin="4,0,0,0" />
+                                    <TextBlock Text="{Binding TableType.DefaultHourlyRate, Converter={StaticResource CurrencyConverter}, StringFormat=' ({0}/h)'}" Foreground="#059669" FontWeight="SemiBold" Margin="4,0,0,0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <!-- Cảnh báo nếu không còn bàn trống -->
+                    <Border Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,14"
+                            Visibility="{Binding HasAvailableTables, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}">
+                        <TextBlock Text="⚠️ Hiện không có bàn trống nào trong quán để chuyển sang!" FontWeight="Bold" Foreground="#DC2626" FontSize="11" />
+                    </Border>
+
+                    <TextBlock Text="LÝ DO CHUYỂN BÀN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,5" />
+                    <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" Height="55" TextWrapping="Wrap" Margin="0,0,0,14" 
+                             Foreground="#000000" CaretBrush="#000000" Padding="8,6" />
+
+                    <!-- Ghi chú tự động -->
+                    <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,10">
+                        <TextBlock Text="ℹ️ Toàn bộ thời gian chơi tích lũy và danh sách món F&amp;B sẽ được tự động chuyển sang bàn đích." 
+                                   FontSize="11" Foreground="#1E40AF" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Thông báo lỗi nếu có -->
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource AccentCrimsonBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <!-- Các nút bấm hành động luôn nằm rõ ràng ở cuối -->
+                <Grid Grid.Row="1" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="1.4*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Content="✕ HỦY BỎ" Style="{StaticResource SecondaryButton}" Height="42" FontSize="12" FontWeight="Bold" Click="Close_Click" />
+                    <Button Grid.Column="2" Content="✓ XÁC NHẬN ĐỒNG Ý" Style="{StaticResource PrimaryButton}" Height="42" FontSize="12" FontWeight="Bold" Command="{Binding ConfirmSwitchCommand}" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Border>
+</Window>
