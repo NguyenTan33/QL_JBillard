@@ -1,0 +1,296 @@
+<Window x:Class="QL_JBillard.Views.Dialogs.CheckoutDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:enums="clr-namespace:QL_JBillard.Domain.Enums"
+        mc:Ignorable="d"
+        Title="Quản lý hệ thống bida - Thanh Toán Hóa Đơn" 
+        Icon="pack://application:,,,/Resources/bida.ico"
+        Height="800" Width="1180"
+        MinHeight="680" MinWidth="1020"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgDarkBrush}"
+        KeyDown="Window_KeyDown">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="THANH TOÁN HÓA ĐƠN - " FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                <TextBlock Text="{Binding TableItem.TableNumber}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
+                <TextBlock Text="{Binding TableItem.TableTypeName, StringFormat=' ({0})'}" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                <Border Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="6" Padding="8,2" Margin="16,0,0,0" VerticalAlignment="Center"
+                        Visibility="{Binding LiveBill.AppliedComboName, Converter={StaticResource SmartVisibilityConverter}}">
+                    <TextBlock Text="{Binding LiveBill.AppliedComboName, StringFormat='🎁 {0}'}" FontSize="12" FontWeight="Bold" Foreground="#B45309" />
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- 2. Main Body: Chia đôi Hóa đơn (Trái) & Thanh toán / QR (Phải) -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.05*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="1.25*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Cột Trái: Chi Tiết Tiền Giờ & Dịch Vụ -->
+            <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="12" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Thông tin giờ chơi -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock Text="CHI TIẾT GIỜ CHƠI &amp; GÓI DỊCH VỤ" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" Margin="0,0,0,6" />
+                        
+                        <!-- Thẻ Gói Combo Áp Dụng (Hiện rõ ràng khi khách chọn Combo) -->
+                        <Border Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,10"
+                                Visibility="{Binding LiveBill.IsComboMode, Converter={StaticResource BoolToVisConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="🎁 GÓI COMBO ÁP DỤNG:" FontSize="11" FontWeight="Bold" Foreground="#B45309" />
+                                <TextBlock Text="{Binding LiveBill.AppliedComboName}" FontSize="15" FontWeight="Bold" Foreground="#92400E" Margin="0,2,0,6" />
+                                <Grid Margin="0,2">
+                                    <TextBlock Text="Thời lượng gói định mức:" FontSize="12" Foreground="#78350F" />
+                                    <TextBlock Text="{Binding LiveBill.ComboDurationText}" FontSize="12" FontWeight="Bold" Foreground="#78350F" HorizontalAlignment="Right" />
+                                </Grid>
+                                <Grid Margin="0,2">
+                                    <TextBlock Text="Giá trọn gói Combo:" FontSize="12" Foreground="#78350F" />
+                                    <TextBlock Text="{Binding LiveBill.ComboPrice, Converter={StaticResource CurrencyConverter}}" FontSize="13" FontWeight="Bold" Foreground="#B45309" HorizontalAlignment="Right" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Đơn giá bàn / giờ khi chơi lẻ (HOURLY) -->
+                        <Grid Margin="0,2" Visibility="{Binding LiveBill.IsComboMode, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}">
+                            <TextBlock Text="Đơn giá bàn / giờ:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <TextBlock Text="{Binding LiveBill.HourlyRate, Converter={StaticResource CurrencyConverter}, StringFormat='{}{0} / giờ'}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <Grid Margin="0,2">
+                            <TextBlock Text="Giờ bắt đầu vào:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <TextBlock Text="{Binding LiveBill.StartTime, StringFormat='{}{0:HH:mm:ss (dd/MM)}'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <Grid Margin="0,2">
+                            <TextBlock Text="Giờ kết thúc ra:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <TextBlock Text="{Binding LiveBill.CurrentTime, StringFormat='{}{0:HH:mm:ss (dd/MM)}'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <Grid Margin="0,2">
+                            <TextBlock Text="Tổng thời gian chơi:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <TextBlock Text="{Binding LiveBill.TotalMinutes, StringFormat='{}{0} phút'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <Grid Margin="0,2">
+                            <TextBlock Text="Tiền giờ bàn &amp; gói combo:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                            <TextBlock Text="{Binding LiveBill.TimeCost, Converter={StaticResource CurrencyConverter}}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <Separator Background="{StaticResource BorderDarkBrush}" Margin="0,6" />
+                        <TextBlock Text="DỊCH VỤ / F&amp;B ĐÃ SỬ DỤNG" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentBlueBrush}" Margin="0,2,0,4" />
+                    </StackPanel>
+
+                    <!-- Danh sách món F&B -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding LiveBill.OrderItems}" AutoGenerateColumns="False" 
+                              CanUserAddRows="False" IsReadOnly="True"
+                              Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                              BorderBrush="{StaticResource BorderDarkBrush}" Foreground="{StaticResource TextPrimaryBrush}"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
+                        
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="MÓN" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Product.ProductName}" FontWeight="Medium" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            <Border Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="4" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                    Visibility="{Binding IsComboItem, Converter={StaticResource BoolToVisConverter}}">
+                                                <TextBlock Text="🎁 Combo" FontSize="10" FontWeight="Bold" Foreground="#B45309" />
+                                            </Border>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="SL" Binding="{Binding Quantity}" Width="35" />
+                            <DataGridTextColumn Header="Đ.GIÁ" Binding="{Binding UnitPrice, Converter={StaticResource CurrencyConverter}}" Width="85" />
+                            <DataGridTextColumn Header="T.TIỀN" Binding="{Binding TotalAmount, Converter={StaticResource CurrencyConverter}}" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Tổng kết tiền giờ + dịch vụ -->
+                    <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,2">
+                                <TextBlock Text="Tiền giờ chơi:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding LiveBill.TimeCost, Converter={StaticResource CurrencyConverter}}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+                            <Grid Margin="0,2">
+                                <TextBlock Text="Tiền dịch vụ F&amp;B:" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding LiveBill.ServiceCost, Converter={StaticResource CurrencyConverter}}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+                            <Separator Background="{StaticResource BorderDarkBrush}" Margin="0,4" />
+                            <Grid Margin="0,2">
+                                <TextBlock Text="TẠM TÍNH:" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="{Binding LiveBill.SubTotal, Converter={StaticResource CurrencyConverter}}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Cột Phải: Khách Hàng, Giảm Giá, Tích Điểm, VietQR / Tiền Mặt -->
+            <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="12" Padding="18" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Phần nội dung cuộn linh hoạt -->
+                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
+                        <StackPanel Margin="0,0,4,0">
+                            <!-- Tìm kiếm Khách Hàng -->
+                            <TextBlock Text="KHÁCH HÀNG &amp; HỘI VIÊN (SĐT)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="105" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding CustomerPhone, UpdateSourceTrigger=PropertyChanged}" Height="34" FontSize="13" />
+                                <Button Grid.Column="2" Content="Tìm / Tra cứu" Style="{StaticResource SecondaryButton}" Height="34" Command="{Binding SearchOrRegisterCustomerCommand}" />
+                            </Grid>
+
+                            <Grid Margin="0,0,0,8" Visibility="{Binding Customer, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="{Binding Customer.FullName, StringFormat='👤 Thành viên: {0}'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
+                                <TextBlock Text="{Binding Customer.Tier.TierName, StringFormat='Hạng thẻ: {0}'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+
+                            <!-- Giảm giá & Trừ điểm -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="CHIẾT KHẤU (%)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,3" />
+                                    <TextBox Text="{Binding DiscountPercent, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="ĐIỂM TRỪ (1đ = 1.000đ)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,3" />
+                                    <TextBox Text="{Binding PointsToUse, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- TỔNG TIỀN PHẢI THU (LỚN) -->
+                            <Border Background="#ECFDF5" CornerRadius="10" Padding="10" Margin="0,2,0,10" BorderBrush="#A7F3D0" BorderThickness="1.5">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="TỔNG TIỀN THANH TOÁN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding FinalAmount, Converter={StaticResource CurrencyConverter}}" 
+                                               FontSize="26" FontWeight="Bold" Foreground="#047857" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Phương thức thanh toán -->
+                            <TextBlock Text="HÌNH THỨC THANH TOÁN:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding AvailablePaymentMethods}" SelectedItem="{Binding SelectedPaymentMethod}" Height="34" Margin="0,0,0,10">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource PaymentMethodToStringConverter}}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+
+                            <!-- Giao diện TIỀN MẶT: Tiền khách đưa & Tiền thừa -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8"
+                                    Visibility="{Binding IsCashMode, Converter={StaticResource BoolToVisConverter}}">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,6">
+                                        <TextBlock Text="TIỀN KHÁCH ĐƯA (VNĐ):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                        <TextBox Text="{Binding CashGiven, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource CurrencyConverter}}" 
+                                                 Width="150" Height="32" FontSize="14" FontWeight="Bold" HorizontalAlignment="Right" />
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <TextBlock Text="TIỀN THỪA TRẢ KHÁCH:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding ChangeDue, Converter={StaticResource CurrencyConverter}}" 
+                                                   FontSize="16" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+
+                                    <WrapPanel HorizontalAlignment="Right">
+                                        <Button Content="Đúng số tiền" Style="{StaticResource SecondaryButton}" Height="26" Padding="8,0" FontSize="11" Margin="0,0,4,4" Command="{Binding SetExactCashCommand}" />
+                                        <Button Content="100.000 đ" Style="{StaticResource SecondaryButton}" Height="26" Padding="8,0" FontSize="11" Margin="0,0,4,4" Command="{Binding SetCash100kCommand}" />
+                                        <Button Content="200.000 đ" Style="{StaticResource SecondaryButton}" Height="26" Padding="8,0" FontSize="11" Margin="0,0,4,4" Command="{Binding SetCash200kCommand}" />
+                                        <Button Content="500.000 đ" Style="{StaticResource SecondaryButton}" Height="26" Padding="8,0" FontSize="11" Margin="0,0,4,4" Command="{Binding SetCash500kCommand}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Giao diện VIETQR: Hiển thị Mã VietQR Động -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8"
+                                    Visibility="{Binding IsVietQrMode, Converter={StaticResource BoolToVisConverter}}">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Border Background="White" CornerRadius="8" Padding="8" Width="150" Height="150" HorizontalAlignment="Center" Margin="0,0,0,6" BorderBrush="#E2E8F0" BorderThickness="1">
+                                        <Image Source="{Binding VietQrImage}" Stretch="Uniform" />
+                                    </Border>
+                                    <TextBlock Text="{Binding BankInfoText}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="{Binding QrMemoText}" FontSize="11" FontFamily="Consolas, Segoe UI" Foreground="{StaticResource AccentAmberBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- PHẦN CỐ ĐỊNH Ở ĐÁY CỘT PHẢI: LUÔN HIỆN NÚT XÁC NHẬN THANH TOÁN (KHÔNG BAO GIỜ PHẢI CUỘN CHUỘT) -->
+                    <StackPanel Grid.Row="1" Margin="0,4,0,0">
+                        <Separator Background="{StaticResource BorderDarkBrush}" Margin="0,0,0,8" />
+
+                        <CheckBox IsChecked="{Binding PrintReceiptAfterCheckout}" Content="In hóa đơn nhiệt (K80 / K58) ngay sau khi thanh toán" 
+                                  FontSize="12" Margin="0,0,0,8" />
+
+                        <!-- Thông báo lỗi nếu có -->
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource AccentCrimsonBrush}" FontSize="12" FontWeight="SemiBold" 
+                                   Margin="0,0,0,6" TextWrapping="Wrap" Visibility="{Binding ErrorMessage, Converter={StaticResource SmartVisibilityConverter}}" />
+
+                        <!-- NÚT THANH TOÁN TO RÕ RÀNG, CHỈ CẦN RÊ CHUỘT LÀ NHẤN NGAY -->
+                        <Button Content="🖨️ XÁC NHẬN THANH TOÁN &amp; IN HÓA ĐƠN (F9 / ENTER)" 
+                                Style="{StaticResource PrimaryButton}" Height="48" FontSize="14" FontWeight="Bold"
+                                Command="{Binding ConfirmCheckoutCommand}" IsEnabled="{Binding IsProcessing, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}">
+                            <Button.Effect>
+                                <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.2" ShadowDepth="2" Color="#059669" />
+                            </Button.Effect>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- 3. Footer -->
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="💡 Phím tắt nhanh: " FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBlock Text="[Enter] hoặc [F9] Xác nhận thanh toán | [Esc] Hủy / Đóng" FontSize="12" Foreground="{StaticResource AccentBlueBrush}" />
+            </StackPanel>
+            <Button Content="Đóng / Hủy (Esc)" Style="{StaticResource SecondaryButton}" Width="130" Height="36" HorizontalAlignment="Right" Click="Close_Click" />
+        </Grid>
+    </Grid>
+</Window>
