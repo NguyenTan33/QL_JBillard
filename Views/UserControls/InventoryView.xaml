@@ -1,0 +1,275 @@
+<UserControl x:Class="QL_JBillard.Views.UserControls.InventoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1100"
+             Background="{StaticResource BgDarkBrush}">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Cảnh báo hàng tồn kho thấp (nếu có) -->
+        <Border Grid.Row="0" Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" 
+                CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
+                Visibility="{Binding LowStockProducts.Count, Converter={StaticResource BoolToVisConverter}}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="⚠️ CẢNH BÁO TỒN KHO:" FontWeight="Bold" Foreground="#D97706" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBlock Text="Có một số mặt hàng sắp hết trong kho! Vui lòng kiểm tra và nhập thêm hàng để phục vụ khách." 
+                           Foreground="#92400E" FontWeight="Medium" VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <!-- 2. Khung Nội Dung Chính: Chia 2 cột (Danh sách món bên trái, Form thêm/sửa bên phải cho Admin) -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Cột Trái: Danh Sách Sản Phẩm & Bộ Lọc -->
+            <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="10" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Thanh tìm kiếm & lọc danh mục -->
+                    <Grid Grid.Row="0" Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="200" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Ô tìm kiếm có Placeholder -->
+                        <Grid Grid.Column="0">
+                            <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" 
+                                     Height="36" Padding="10,0" VerticalContentAlignment="Center" FontSize="13" 
+                                     Foreground="#000000" CaretBrush="#000000" FontWeight="SemiBold" />
+                            <TextBlock Text="🔍 Tìm kiếm món theo tên hoặc mã món..." Foreground="{StaticResource TextMutedBrush}" 
+                                       Margin="10,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Visibility="{Binding SearchKeyword, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}" />
+                        </Grid>
+
+                        <!-- Dropdown danh mục -->
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" 
+                                  DisplayMemberPath="CategoryName" Height="36" />
+                    </Grid>
+
+                    <!-- Bảng Danh Sách Sản Phẩm (Màu sáng) -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Products}" AutoGenerateColumns="False" 
+                              CanUserAddRows="False" IsReadOnly="True"
+                              Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                              BorderBrush="{StaticResource BorderDarkBrush}" Foreground="{StaticResource TextPrimaryBrush}"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
+                        
+                        <DataGrid.Columns>
+                            <!-- Cột Ảnh đại diện món -->
+                            <DataGridTemplateColumn Header="ẢNH" Width="55">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Width="38" Height="38" CornerRadius="6" Background="#F1F5F9" ClipToBounds="True" Margin="2">
+                                            <Image Source="{Binding ImagePath}" Stretch="UniformToFill" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="MÃ" Binding="{Binding ProductCode}" Width="90" />
+                            <DataGridTextColumn Header="TÊN SẢN PHẨM / MÓN" Binding="{Binding ProductName}" Width="*" />
+                            <DataGridTextColumn Header="NHÓM" Binding="{Binding Category.CategoryName}" Width="120" />
+                            <DataGridTextColumn Header="ĐVT" Binding="{Binding Unit.UnitName}" Width="60" />
+                            <DataGridTextColumn Header="GIÁ BÁN" Binding="{Binding SellingPrice, Converter={StaticResource CurrencyConverter}}" Width="100" />
+                            <DataGridTextColumn Header="TỒN KHO" Binding="{Binding InventoryItem.QuantityOnHand}" Width="80" />
+
+                            <!-- Nút Thao Tác: Sửa (Chỉ Admin) & Nhập Kho Tự Nhập Số Lượng -->
+                            <DataGridTemplateColumn Header="THAO TÁC" Width="170">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Padding="8,2" Height="28" Margin="0,0,6,0"
+                                                    Visibility="{Binding DataContext.IsAdmin, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisConverter}}"
+                                                    Command="{Binding DataContext.EditProductCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="📥 Nhập kho" Style="{StaticResource PrimaryButton}" Padding="8,2" Height="28"
+                                                    Command="{Binding DataContext.StartImportStockCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" ToolTip="Nhập số lượng hàng vào kho" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- Khoảng cách giữa 2 cột (Chỉ hiện khi là Admin) -->
+            <Rectangle Grid.Column="1" Width="18" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}" />
+
+            <!-- Cột Phải: Form Thêm / Cập Nhật Món & Vật Tư (Chỉ Quản trị viên Admin mới có quyền) -->
+            <Border Grid.Column="2" Width="380" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"
+                    Background="#FFFFFF" CornerRadius="10" Padding="18" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                </Border.Effect>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="THÔNG TIN SẢN PHẨM" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,14" />
+
+                        <!-- Mã sản phẩm -->
+                        <TextBlock Text="MÃ SẢN PHẨM (CODE)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding FormProductCode, UpdateSourceTrigger=PropertyChanged}" Height="34" Margin="0,0,0,12" />
+
+                        <!-- Ảnh đại diện món -->
+                        <TextBlock Text="ẢNH ĐẠI DIỆN MÓN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Khung xem trước ảnh -->
+                            <Border Grid.Column="0" Width="68" Height="68" CornerRadius="8" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" ClipToBounds="True">
+                                <Grid>
+                                    <Image Source="{Binding FormImagePath}" Stretch="UniformToFill" 
+                                           Visibility="{Binding FormImagePath, Converter={StaticResource BoolToVisConverter}}" />
+                                    <TextBlock Text="📷" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.4"
+                                               Visibility="{Binding FormImagePath, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Nút chọn ảnh và xóa ảnh -->
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                <Button Content="📷 Chọn Ảnh Món..." Style="{StaticResource SecondaryButton}" Height="32" Margin="0,0,0,6"
+                                        Command="{Binding BrowseImageCommand}" HorizontalAlignment="Left" Padding="12,0" />
+                                <Button Content="✕ Bỏ chọn ảnh" Style="{StaticResource DangerButton}" Height="26" FontSize="11"
+                                        Command="{Binding ClearImageCommand}" HorizontalAlignment="Left" Padding="8,0"
+                                        Visibility="{Binding FormImagePath, Converter={StaticResource BoolToVisConverter}}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Tên sản phẩm -->
+                        <TextBlock Text="TÊN SẢN PHẨM / DỊCH VỤ (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding FormProductName, UpdateSourceTrigger=PropertyChanged}" Height="34" Margin="0,0,0,12" />
+
+                        <!-- Danh mục & Đơn vị tính -->
+                        <TextBlock Text="NHÓM DANH MỤC" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding FormSelectedCategory}" DisplayMemberPath="CategoryName" Height="34" Margin="0,0,0,12" />
+
+                        <TextBlock Text="ĐƠN VỊ TÍNH" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <ComboBox ItemsSource="{Binding Units}" SelectedItem="{Binding FormSelectedUnit}" DisplayMemberPath="UnitName" Height="34" Margin="0,0,0,12" />
+
+                        <!-- Giá vốn & Giá bán -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="GIÁ VỐN" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding FormCostPrice, UpdateSourceTrigger=PropertyChanged}" Height="34" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="GIÁ BÁN LẺ (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding FormSellingPrice, UpdateSourceTrigger=PropertyChanged}" Height="34" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Tồn kho khởi tạo & Cảnh báo -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="TỒN BAN ĐẦU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding FormInitialStock, UpdateSourceTrigger=PropertyChanged}" Height="34" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="BÁO TỒN THẤP" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding FormMinAlert, UpdateSourceTrigger=PropertyChanged}" Height="34" />
+                            </StackPanel>
+                        </Grid>
+
+                        <CheckBox IsChecked="{Binding FormIsInventory}" Content="Quản lý trừ kho tự động khi gọi món" 
+                                  Margin="0,4,0,16" />
+
+                        <!-- Thông báo kết quả -->
+                        <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" 
+                                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10" TextWrapping="Wrap" />
+
+                        <!-- Nút Lưu -->
+                        <Button Content="LƯU SẢN PHẨM" Style="{StaticResource PrimaryButton}" Height="38" 
+                                Command="{Binding SaveProductCommand}" Margin="0,0,0,8" />
+
+                        <Button Content="Làm Mới Form" Style="{StaticResource SecondaryButton}" Height="34" 
+                                Command="{Binding PrepareNewProductCommand}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- 3. MODAL POPUP NHẬP KHO TỰ NHẬP SỐ LƯỢNG (KHI BẤM 📥 NHẬP KHO) -->
+        <Border Grid.RowSpan="2" Background="#80000000" 
+                Visibility="{Binding IsImportingStock, Converter={StaticResource BoolToVisConverter}}">
+            <Border Background="#FFFFFF" Width="440" HorizontalAlignment="Center" VerticalAlignment="Center" 
+                    CornerRadius="12" Padding="24" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" Direction="270" Opacity="0.2" ShadowDepth="6" Color="Black" />
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="📥 NHẬP KHO HÀNG HÓA" FontSize="16" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,12" />
+                    
+                    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="{Binding ImportingProduct.ProductName}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="{Binding ImportingProduct.InventoryItem.QuantityOnHand, StringFormat='Tồn kho hiện tại: {0}'}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Số lượng tự nhập -->
+                    <TextBlock Text="SỐ LƯỢNG NHẬP THÊM (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding ImportQuantity, UpdateSourceTrigger=PropertyChanged}" Height="38" FontSize="15" FontWeight="Bold" Margin="0,0,0,12" 
+                             Foreground="#000000" CaretBrush="#000000" />
+
+                    <!-- Đơn giá vốn -->
+                    <TextBlock Text="GIÁ VỐN NHẬP (VNĐ/ĐVT)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding ImportCostPrice, UpdateSourceTrigger=PropertyChanged}" Height="38" Margin="0,0,0,12" 
+                             Foreground="#000000" CaretBrush="#000000" FontWeight="SemiBold" />
+
+                    <!-- Ghi chú nhập -->
+                    <TextBlock Text="GHI CHÚ / NHÀ CUNG CẤP" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding ImportNotes, UpdateSourceTrigger=PropertyChanged}" Height="38" Margin="0,0,18,0" 
+                             Foreground="#000000" CaretBrush="#000000" />
+
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="1.4*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Content="Hủy Bỏ" Style="{StaticResource SecondaryButton}" Height="38" Command="{Binding CancelImportStockCommand}" />
+                        <Button Grid.Column="2" Content="✓ XÁC NHẬN NHẬP KHO" Style="{StaticResource PrimaryButton}" Height="38" Command="{Binding ConfirmImportStockCommand}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</UserControl>
