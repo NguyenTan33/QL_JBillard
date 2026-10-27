@@ -1,0 +1,586 @@
+<UserControl x:Class="QL_JBillard.Views.UserControls.ShiftView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1100"
+             Background="{StaticResource BgDarkBrush}">
+    
+    <Grid Margin="20">
+        <!-- 1. KHI ĐANG CÓ CA HOẠT ĐỘNG -->
+        <Grid Visibility="{Binding HasActiveShift, Converter={StaticResource BoolToVisConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="18" />
+                <ColumnDefinition Width="420" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Cột Trái: Báo Cáo Doanh Thu, Tiền Két Thực Giữ & Phiếu Nộp Ngân Hàng -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <!-- Thông tin ca làm việc hiện tại -->
+                    <Border Background="#FFFFFF" CornerRadius="12" Padding="18" Margin="0,0,0,14" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                        </Border.Effect>
+                        <StackPanel>
+                            <!-- Header của thẻ -->
+                            <Grid Margin="0,0,0,14">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="💼 THÔNG TIN CA LÀM VIỆC HIỆN TẠI" FontSize="14" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <Border HorizontalAlignment="Right" Background="#DEF7EC" CornerRadius="12" Padding="10,4" BorderBrush="#BCF0DA" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Ellipse Width="7" Height="7" Fill="#059669" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="ĐANG HOẠT ĐỘNG" FontSize="11" FontWeight="Bold" Foreground="#03543F" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!-- 3 Cột thông tin rõ ràng, thoáng đãng -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="1" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Cột 1: Thu ngân trực ca -->
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBlock Text="THU NGÂN TRỰC CA" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{Binding CurrentShift.User.FullName}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
+                                    <TextBlock Text="{Binding CurrentShift.User.Username, StringFormat='Tài khoản: @{0}'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+
+                                <Rectangle Grid.Column="1" Fill="#E2E8F0" VerticalAlignment="Stretch" Margin="0,2" />
+
+                                <!-- Cột 2: Thời gian mở ca -->
+                                <StackPanel Grid.Column="2" Margin="14,0,12,0">
+                                    <TextBlock Text="THỜI GIAN MỞ CA" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{Binding CurrentShift.StartTime, StringFormat='{}{0:HH:mm:ss}'}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
+                                    <TextBlock Text="{Binding CurrentShift.StartTime, StringFormat='Ngày: {0:dd/MM/yyyy}'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+
+                                <Rectangle Grid.Column="3" Fill="#E2E8F0" VerticalAlignment="Stretch" Margin="0,2" />
+
+                                <!-- Cột 3: Tiền bàn giao đầu ca -->
+                                <StackPanel Grid.Column="4" Margin="14,0,0,0">
+                                    <TextBlock Text="TIỀN BÀN GIAO ĐẦU CA" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{Binding CurrentShift.OpeningCash, Converter={StaticResource CurrencyConverter}}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" Margin="0,4,0,0" />
+                                    <TextBlock Text="Xác nhận đủ 100%" FontSize="11" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 4 Thẻ thống kê tài chính trong ca -->
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Tiền mặt thực thu -->
+                        <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="10" Padding="12" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="TIỀN MẶT THỰC THU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding LiveCashRevenue, Converter={StaticResource CurrencyConverter}}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Chuyển khoản / QR -->
+                        <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="10" Padding="12" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="CHUYỂN KHOẢN / QR" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding LiveTransferRevenue, Converter={StaticResource CurrencyConverter}}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentBlueBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Đã nộp ngân hàng -->
+                        <Border Grid.Column="4" Background="#FFFFFF" CornerRadius="10" Padding="12" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="ĐÃ NỘP NGÂN HÀNG" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding LiveBankDeposits, Converter={StaticResource CurrencyConverter}}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Hóa đơn -->
+                        <Border Grid.Column="6" Background="#FFFFFF" CornerRadius="10" Padding="12" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="HÓA ĐƠN ĐÃ TÍNH" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding LiveInvoiceCount, StringFormat='{}{0} Hóa đơn'}" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Card Tổng Tiền Mặt Thực Giữ Trong Két Hiện Tại & Nút Nộp Tiền Ngân Hàng Hợp Lý -->
+                    <Border Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1.5" CornerRadius="12" Padding="18" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="TIỀN MẶT THỰC GIỮ TRONG KÉT HIỆN TẠI (SAU KHI TRỪ TIỀN ĐÃ NỘP)" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
+                                <TextBlock Text="{Binding CurrentDrawerCash, Converter={StaticResource CurrencyConverter}}" FontSize="28" FontWeight="Bold" Foreground="#047857" Margin="0,4,0,0" />
+                                <TextBlock Text="(= Tiền bàn giao đầu ca + Tiền mặt thu được - Tiền đã nộp ngân hàng)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <!-- Khu vực hành động Nộp Ngân Hàng nằm gọn gàng bên phải -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
+                                <Button Content="🏦 NỘP TIỀN NGÂN HÀNG" Style="{StaticResource PrimaryButton}" 
+                                        Height="44" Padding="18,0" FontSize="13" FontWeight="Bold"
+                                        Command="{Binding OpenBankDepositCommand}">
+                                    <Button.Effect>
+                                        <DropShadowEffect BlurRadius="6" Direction="270" Opacity="0.15" ShadowDepth="2" Color="#059669" />
+                                    </Button.Effect>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Bảng Danh Sách Phiếu Nộp Tiền Ngân Hàng -->
+                    <Border Background="#FFFFFF" CornerRadius="10" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,10">
+                                <TextBlock Text="LỊCH SỬ PHIẾU NỘP TIỀN NGÂN HÀNG TRONG CA" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="{Binding BankDepositSlips.Count, StringFormat='{}{0} Phiếu'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+
+                            <DataGrid ItemsSource="{Binding BankDepositSlips}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                      Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                                      BorderBrush="{StaticResource BorderDarkBrush}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0"
+                                      MaxHeight="220">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="MÃ PHIẾU" Binding="{Binding SlipCode}" Width="120" FontWeight="Bold" />
+                                    <DataGridTextColumn Header="THỜI GIAN" Binding="{Binding CreatedAt, StringFormat='{}{0:HH:mm dd/MM}'}" Width="110" />
+                                    <DataGridTextColumn Header="NGƯỜI NỘP" Binding="{Binding User.FullName}" Width="130" />
+                                    <DataGridTextColumn Header="SỐ TIỀN NỘP" Binding="{Binding Amount, Converter={StaticResource CurrencyConverter}}" Width="120" FontWeight="Bold" />
+                                    <DataGridTextColumn Header="GHI CHÚ / TÀI KHOẢN" Binding="{Binding Notes}" Width="*" />
+
+                                    <DataGridTemplateColumn Header="TRẠNG THÁI" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" Background="#ECFDF5">
+                                                    <TextBlock Text="{Binding Status}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Cột Phải: Form Chốt Ca & Bàn Giao -->
+            <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="12" Padding="20" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                </Border.Effect>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="CHỐT CA &amp; BÀN GIAO TIỀN KÉT" FontSize="16" FontWeight="Bold" Foreground="{StaticResource AccentCrimsonBrush}" Margin="0,0,0,12" />
+
+                        <!-- Banner Cảnh báo Phân quyền Ca Trực (Theo nhân viên / Quyền Admin) -->
+                        <Border Visibility="{Binding ShiftOwnershipWarning, Converter={StaticResource BoolToVisConverter}}"
+                                Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,12">
+                            <TextBlock Text="{Binding ShiftOwnershipWarning}" FontSize="12" FontWeight="SemiBold" Foreground="#92400E" TextWrapping="Wrap" />
+                        </Border>
+
+                        <TextBlock Text="TIỀN MẶT THỰC ĐẾM TRONG KÉT (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding FormActualCashInput, UpdateSourceTrigger=PropertyChanged}" 
+                                 FontSize="18" FontWeight="Bold" Height="42" Margin="0,0,0,4" 
+                                 Foreground="#000000" CaretBrush="#000000" Padding="10,0" VerticalContentAlignment="Center" />
+                        <TextBlock Text="{Binding FormActualCash, Converter={StaticResource CurrencyConverter}, StringFormat='{}Quy đổi: {0}'}" 
+                                   FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentAmberBrush}" Margin="0,0,0,10" />
+
+                        <!-- BẢNG ĐẾM SỐ TỜ THEO MỆNH GIÁ (500K - 500Đ) -->
+                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,12">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,8">
+                                    <TextBlock Text="🧮 BẢNG ĐẾM MỆNH GIÁ TIỀN (500k - 500đ):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                    <Button Content="✕ Xóa tờ" Style="{StaticResource SecondaryButton}" Height="22" Padding="6,0" FontSize="10" HorizontalAlignment="Right" Command="{Binding ClearDenominationsCommand}" />
+                                </Grid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Cột 1: Mệnh giá cao (500k, 200k, 100k, 50k, 20k) -->
+                                    <StackPanel Grid.Column="0">
+                                        <!-- 500k -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="500k:" FontSize="11" FontWeight="Bold" Foreground="#047857" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="500k" />
+                                                <TextBox Text="{Binding Count500k, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="500k" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal500k, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <!-- 200k -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="200k:" FontSize="11" FontWeight="Bold" Foreground="#047857" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="200k" />
+                                                <TextBox Text="{Binding Count200k, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="200k" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal200k, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <!-- 100k -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="100k:" FontSize="11" FontWeight="Bold" Foreground="#047857" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="100k" />
+                                                <TextBox Text="{Binding Count100k, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="100k" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal100k, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <!-- 50k -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="50k:" FontSize="11" FontWeight="Bold" Foreground="#2563EB" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="50k" />
+                                                <TextBox Text="{Binding Count50k, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="50k" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal50k, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <!-- 20k -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="20k:" FontSize="11" FontWeight="Bold" Foreground="#2563EB" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="20k" />
+                                                <TextBox Text="{Binding Count20k, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="20k" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal20k, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <!-- Cột 2: Mệnh giá nhỏ (10k, 5k, 2k, 1k, 500đ) -->
+                                    <StackPanel Grid.Column="2">
+                                        <!-- 10k -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="10k:" FontSize="11" FontWeight="Bold" Foreground="#D97706" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="10k" />
+                                                <TextBox Text="{Binding Count10k, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="10k" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal10k, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <!-- 5k -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="5k:" FontSize="11" FontWeight="Bold" Foreground="#D97706" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="5k" />
+                                                <TextBox Text="{Binding Count5k, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="5k" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal5k, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <!-- 2k -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="2k:" FontSize="11" FontWeight="Bold" Foreground="#475569" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="2k" />
+                                                <TextBox Text="{Binding Count2k, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="2k" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal2k, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <!-- 1k -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="1k:" FontSize="11" FontWeight="Bold" Foreground="#475569" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="1k" />
+                                                <TextBox Text="{Binding Count1k, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="1k" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal1k, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                        <!-- 500đ -->
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="38" />
+                                                <ColumnDefinition Width="78" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="500đ:" FontSize="11" FontWeight="Bold" Foreground="#475569" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Button Content="-" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding DecrementCountCommand}" CommandParameter="500d" />
+                                                <TextBox Text="{Binding Count500d, UpdateSourceTrigger=PropertyChanged}" Width="36" Height="22" FontSize="11" FontWeight="Bold" 
+                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="#000000" CaretBrush="#000000" Padding="0" Margin="2,0" />
+                                                <Button Content="+" Width="18" Height="22" FontSize="12" FontWeight="Bold" Padding="0" Style="{StaticResource SecondaryButton}" 
+                                                        Command="{Binding IncrementCountCommand}" CommandParameter="500d" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal500d, Converter={StaticResource CurrencyConverter}}" FontSize="9.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Live Discrepancy Status -->
+                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="KIỂM TRA ĐỐI SOÁT CHÊNH LỆCH KÉT:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding DiscrepancyStatus}" FontSize="13" FontWeight="Bold" Foreground="{Binding DiscrepancyColor}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="GHI CHÚ / GIẢI TRÌNH BÀN GIAO" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding FormCloseNotes, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" Margin="0,0,14,0" 
+                                 Foreground="#000000" CaretBrush="#000000" Padding="8,4" />
+
+                        <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" 
+                                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,12" TextWrapping="Wrap" />
+
+                        <!-- Nút Chốt Ca: Khóa hoặc yêu cầu xác nhận nếu lệch (Chỉ chủ ca hoặc Admin mới được bấm) -->
+                        <Button Content="CHỐT CA LÀM VIỆC" Style="{StaticResource DangerButton}" Height="42" FontSize="13" FontWeight="Bold"
+                                Command="{Binding CloseShiftCommand}" IsEnabled="{Binding IsShiftOwnerOrAdmin}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- 2. KHI CHƯA CÓ CA NÀO MỞ (GIAO DIỆN BÀN GIAO & MỞ CA KÈM LỊCH SỬ NỘP TIỀN NGÂN HÀNG) -->
+        <Grid Visibility="{Binding HasActiveShift, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="18" />
+                <ColumnDefinition Width="480" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Cột Trái: Bảng Danh Sách Phiếu Nộp Tiền Ngân Hàng Lưu Trữ (Luôn hiển thị) -->
+            <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="12" Padding="18" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="🏦 LỊCH SỬ PHIẾU NỘP TIỀN NGÂN HÀNG HỆ THỐNG" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Danh sách biên lai, bằng chứng nộp tiền vào tài khoản ngân hàng của quán" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding BankDepositSlips.Count, StringFormat='{}{0} Phiếu'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding BankDepositSlips}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                              Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                              BorderBrush="{StaticResource BorderDarkBrush}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="MÃ PHIẾU" Binding="{Binding SlipCode}" Width="120" FontWeight="Bold" />
+                            <DataGridTextColumn Header="THỜI GIAN" Binding="{Binding CreatedAt, StringFormat='{}{0:HH:mm dd/MM}'}" Width="110" />
+                            <DataGridTextColumn Header="NGƯỜI NỘP" Binding="{Binding User.FullName}" Width="130" />
+                            <DataGridTextColumn Header="SỐ TIỀN NỘP" Binding="{Binding Amount, Converter={StaticResource CurrencyConverter}}" Width="120" FontWeight="Bold" />
+                            <DataGridTextColumn Header="GHI CHÚ / TÀI KHOẢN" Binding="{Binding Notes}" Width="*" />
+
+                            <DataGridTemplateColumn Header="TRẠNG THÁI" Width="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" Background="#ECFDF5">
+                                            <TextBlock Text="{Binding Status}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- Cột Phải: Form Mở Ca Làm Việc -->
+            <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="12" Padding="24" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="12" Direction="270" Opacity="0.06" ShadowDepth="3" Color="Black" />
+                </Border.Effect>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Width="52" Height="52" CornerRadius="14" HorizontalAlignment="Center" Margin="0,0,0,10">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.12" ShadowDepth="2" Color="Black" />
+                            </Border.Effect>
+                            <Image Source="pack://application:,,,/Resources/app_icon.png" RenderOptions.BitmapScalingMode="HighQuality" />
+                        </Border>
+                        <TextBlock Text="XÁC NHẬN BÀN GIAO &amp; MỞ CA LÀM VIỆC" FontSize="17" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" HorizontalAlignment="Center" Margin="0,0,0,14" />
+
+                        <!-- Khung hiển thị Tiền Bàn Giao Từ Ca Trước -->
+                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1.5" CornerRadius="8" Padding="14" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="TIỀN THỰC GIỮ TRONG KÉT BÀN GIAO TỪ CA TRƯỚC:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding PreviousShiftClosingCash, Converter={StaticResource CurrencyConverter}}" 
+                                           FontSize="22" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" Margin="0,4,0,0" />
+                                <TextBlock Text="* Thu ngân vui lòng kiểm đếm tiền mặt thực tế trong két trước khi nhận ca." FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Tiền thu ngân thực đếm -->
+                        <TextBlock Text="TIỀN MẶT THU NGÂN THỰC ĐẾM TRONG KÉT (VNĐ) (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding FormOpeningCashInput, UpdateSourceTrigger=PropertyChanged}" 
+                                 FontSize="17" FontWeight="Bold" Height="42" Margin="0,0,0,6" 
+                                 Foreground="#000000" CaretBrush="#000000" Padding="10,0" VerticalContentAlignment="Center" />
+                        <TextBlock Text="{Binding FormOpeningCash, Converter={StaticResource CurrencyConverter}, StringFormat='{}Quy đổi: {0}'}" 
+                                   FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentAmberBrush}" Margin="0,0,0,12" />
+
+                        <!-- Trạng thái khớp / lệch tiền đầu ca -->
+                        <Border CornerRadius="8" Padding="12" Margin="0,0,0,14" BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#ECFDF5" />
+                                    <Setter Property="BorderBrush" Value="#A7F3D0" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOpeningMatch}" Value="False">
+                                            <Setter Property="Background" Value="#FFFBEB" />
+                                            <Setter Property="BorderBrush" Value="#FDE68A" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <TextBlock FontSize="12" FontWeight="Bold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="✅ Tiền thực đếm KHỚP với tiền bàn giao ca trước (Không lệch)." />
+                                            <Setter Property="Foreground" Value="{StaticResource AccentEmeraldDarkBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsOpeningMatch}" Value="False">
+                                                    <Setter Property="Text" Value="⚠️ CẢNH BÁO: Tiền thực đếm LỆCH so với tiền bàn giao ca trước!" />
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentAmberBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <!-- Chênh lệch cụ thể nếu có -->
+                                <TextBlock Text="{Binding OpeningDiscrepancyAmount, Converter={StaticResource CurrencyConverter}, StringFormat='Chênh lệch: {0}'}" 
+                                           FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentCrimsonBrush}" Margin="0,2,0,0"
+                                           Visibility="{Binding IsOpeningMatch, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Khung Nhập Lưu Ý Báo Cáo Cho Quản Lý Khi Lệch Tiền Đầu Ca -->
+                        <StackPanel Visibility="{Binding IsOpeningMatch, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}" Margin="0,0,0,14">
+                            <TextBlock Text="LƯU Ý / BÁO CÁO LỆCH TIỀN GỬI QUẢN LÝ / CHỦ QUÁN (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentCrimsonBrush}" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding OpeningDiscrepancyNotes, UpdateSourceTrigger=PropertyChanged}" 
+                                     Height="55" TextWrapping="Wrap" Foreground="#000000" CaretBrush="#000000" Padding="8,4" />
+                        </StackPanel>
+
+                        <!-- Ghi chú mở ca -->
+                        <TextBlock Text="GHI CHÚ MỞ CA" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding FormStartNotes, UpdateSourceTrigger=PropertyChanged}" Height="45" TextWrapping="Wrap" Margin="0,0,0,14" 
+                                 Foreground="#000000" CaretBrush="#000000" Padding="8,4" />
+
+                        <!-- Thông báo -->
+                        <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" 
+                                   FontSize="12" FontWeight="SemiBold" Margin="0,0,0,12" TextWrapping="Wrap" />
+
+                        <!-- Nút mở ca -->
+                        <Button Content="✓ XÁC NHẬN &amp; MỞ CA LÀM VIỆC" Style="{StaticResource PrimaryButton}" Height="42" FontSize="13" FontWeight="Bold"
+                                Command="{Binding StartShiftCommand}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
