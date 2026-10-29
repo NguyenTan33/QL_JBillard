@@ -1,12 +1,287 @@
-﻿<Window x:Class="QL_JBillard.MainWindow"
+<Window x:Class="QL_JBillard.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:QL_JBillard"
+        xmlns:vm="clr-namespace:QL_JBillard.ViewModels"
+        xmlns:views="clr-namespace:QL_JBillard.Views.UserControls"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="QUẢN LÝ HỆ THỐNG BIDA" 
+        Icon="pack://application:,,,/Resources/bida.ico"
+        WindowState="Maximized"
+        Height="820" Width="1400"
+        MinHeight="720" MinWidth="1100"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgDarkBrush}">
+    
+    <Window.Resources>
+        <!-- DataTemplates cho Navigation ContentControl -->
+        <DataTemplate DataType="{x:Type vm:TableMapViewModel}">
+            <views:TableMapView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:InventoryViewModel}">
+            <views:InventoryView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CustomerViewModel}">
+            <views:CustomerView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:OrderQueueViewModel}">
+            <views:OrderQueueView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReportsViewModel}">
+            <views:ReportsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ShiftViewModel}">
+            <views:ShiftView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AuditLogViewModel}">
+            <views:AuditLogView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:UserManagementViewModel}">
+            <views:UserManagementView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TableManagementViewModel}">
+            <views:TableManagementView />
+        </DataTemplate>
 
+        <!-- Style Nút Menu Sidebar (Màu Sáng Cao Cấp, Chữ Đen Rõ Nét 100%) -->
+        <Style x:Key="SidebarButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#0F172A" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Height" Value="44" />
+            <Setter Property="Padding" Value="16,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,3" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}"
+                                TextElement.Foreground="{TemplateBinding Foreground}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Left" 
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#F1F5F9" />
+                                <Setter Property="Foreground" Value="#000000" />
+                                <Setter TargetName="border" Property="TextElement.Foreground" Value="#000000" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- 1. THANH ĐIỀU HƯỚNG BÊN TRÁI (SIDEBAR - LIGHT THEME SÁNG ĐẸP) -->
+        <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,1,0" Padding="14,20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Logo & Brand Header -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Border Width="42" Height="42" CornerRadius="10" VerticalAlignment="Center" Margin="0,0,10,0">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.15" ShadowDepth="2" Color="Black" />
+                            </Border.Effect>
+                            <Image Source="pack://application:,,,/Resources/app_icon.png" RenderOptions.BitmapScalingMode="HighQuality" />
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="HỆ THỐNG BIDA" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="QUẢN LÝ VẬN HÀNH" FontSize="10" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Separator Background="{StaticResource BorderDarkBrush}" Margin="0,16,0,0" />
+                </StackPanel>
+
+                <!-- Danh sách Menu chuyển Tab (Phân chia các nhóm chuyên nghiệp, rõ ràng) -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="0,0,0,10">
+                        <!-- NHÓM 1: BÁN HÀNG & VẬN HÀNH (Thu ngân & Admin) -->
+                        <TextBlock Text="BÁN HÀNG &amp; VẬN HÀNH" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" Margin="8,0,0,6" />
+
+                        <Button Content="🎱   Sơ Đồ Bàn Chơi" Style="{StaticResource SidebarButton}" 
+                                Command="{Binding NavigateCommand}" CommandParameter="TABLES" />
+
+                        <Button Content="📋   Danh Sách Order" Style="{StaticResource SidebarButton}" 
+                                Command="{Binding NavigateCommand}" CommandParameter="ORDER_QUEUE" />
+
+                        <Button Content="💼   Ca Trực &amp; Tiền Két" Style="{StaticResource SidebarButton}" 
+                                Command="{Binding NavigateCommand}" CommandParameter="SHIFT" />
+
+                        <Separator Background="{StaticResource BorderDarkBrush}" Margin="8,10,8,12" />
+
+                        <!-- NHÓM 2: DỊCH VỤ & HỘI VIÊN (Thu Ngân & Admin) -->
+                        <TextBlock Text="DỊCH VỤ &amp; HỘI VIÊN" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" Margin="8,0,0,6" />
+
+                        <Button Content="🍔   Thực Đơn &amp; Kho Hàng" Style="{StaticResource SidebarButton}" 
+                                Command="{Binding NavigateCommand}" CommandParameter="INVENTORY" />
+
+                        <Button Content="👥   Khách Hàng &amp; Hội Viên" Style="{StaticResource SidebarButton}" 
+                                Command="{Binding NavigateCommand}" CommandParameter="CUSTOMERS" />
+
+                        <Separator Background="{StaticResource BorderDarkBrush}" Margin="8,10,8,12" 
+                                   Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}" />
+
+                        <!-- NHÓM 3: QUẢN TRỊ & HỆ THỐNG (Chỉ Admin) -->
+                        <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}">
+                            <TextBlock Text="QUẢN TRỊ &amp; HỆ THỐNG" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" Margin="8,0,0,6" />
+
+                            <Button Content="🗂️   Quản Lý Bàn &amp; Khu Vực" Style="{StaticResource SidebarButton}" 
+                                    Command="{Binding NavigateCommand}" CommandParameter="TABLE_MGMT" />
+
+                            <Button Content="📊   Báo Cáo &amp; Thống Kê" Style="{StaticResource SidebarButton}" 
+                                    Command="{Binding NavigateCommand}" CommandParameter="REPORTS" />
+
+                            <Button Content="🛡️   Nhật Ký &amp; Bảo Mật" Style="{StaticResource SidebarButton}" 
+                                    Command="{Binding NavigateCommand}" CommandParameter="AUDIT" />
+
+                            <Button Content="👤   Tài Khoản &amp; Thu Ngân" Style="{StaticResource SidebarButton}" 
+                                    Command="{Binding NavigateCommand}" CommandParameter="USERS" />
+
+                            <Button Content="⚙️   Cài Đặt Hệ Thống" Style="{StaticResource SidebarButton}" 
+                                    Command="{Binding NavigateCommand}" CommandParameter="SETTINGS" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Profile Người dùng & Nút Đăng xuất ở đáy -->
+                <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="10" Padding="12" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="36" Height="36" CornerRadius="18" Margin="0,0,10,0" VerticalAlignment="Center">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="6" Direction="270" Opacity="0.12" ShadowDepth="1" Color="Black" />
+                                </Border.Effect>
+                                <Image Source="pack://application:,,,/Resources/app_icon.png" RenderOptions.BitmapScalingMode="HighQuality" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding CurrentUser.FullName}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding CurrentUser.Role, Converter={StaticResource RoleToTextConverter}}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource AccentAmberBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <Button Content="Đăng Xuất Khỏi Hệ Thống" Style="{StaticResource DangerButton}" Height="32" Padding="0" FontSize="11"
+                                Command="{Binding LogoutCommand}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- 2. KHU VỰC NỘI DUNG CHÍNH (CONTENT AREA) -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="58" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Top Header Bar (Màu sáng) -->
+            <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,0,1" Padding="20,0">
+                <Grid VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Tiêu đề -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="26" Height="26" CornerRadius="6" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <Image Source="pack://application:,,,/Resources/app_icon.png" RenderOptions.BitmapScalingMode="HighQuality" />
+                        </Border>
+                        <TextBlock Text="QUẢN LÝ HỆ THỐNG BIDA" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Đồng hồ thời gian thực ở giữa -->
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding CurrentDateTimeString}" FontSize="13" FontWeight="SemiBold" 
+                                   FontFamily="Segoe UI, Consolas" Foreground="{StaticResource TextSecondaryBrush}" />
+                    </StackPanel>
+
+                    <!-- Góc phải: Chỉ hiển thị Thông tin ca trực -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="#FFFBEB" CornerRadius="14" Padding="12,5" BorderBrush="#FDE68A" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="💼 " FontSize="11" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding ShiftStatusText}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource AccentAmberBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Vùng Render View Tương Ứng -->
+            <ContentControl Grid.Row="1" Content="{Binding CurrentViewModel}" />
+
+            <!-- 3. NOTION-STYLE TOAST NOTIFICATION (GÓC TRÊN BÊN PHẢI, TỰ ẨN 7S) -->
+            <ItemsControl Grid.Row="1" ItemsSource="{Binding ToastNotifications}"
+                          HorizontalAlignment="Right" VerticalAlignment="Top"
+                          Margin="0, 16, 20, 0" Panel.ZIndex="99999" Width="360">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#0F172A" CornerRadius="10" Padding="14,12" Margin="0,0,0,10"
+                                BorderBrush="{Binding BorderBrushColor}" BorderThickness="1.5">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="14" Direction="270" Opacity="0.35" ShadowDepth="4" Color="Black" />
+                            </Border.Effect>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Icon thông báo (Xanh lá khi Mở bàn/Thao tác tốt, Đỏ khi Trễ món) -->
+                                <Border Grid.Column="0" Background="{Binding IconBgColor}" Width="32" Height="32" CornerRadius="8" Margin="0,0,10,0" VerticalAlignment="Top">
+                                    <TextBlock Text="{Binding IconText}" FontSize="15" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#FFFFFF" />
+                                </Border>
+
+                                <!-- Nội dung thông báo -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="Bold" Foreground="{Binding TitleColor}" />
+                                    <TextBlock Text="{Binding Message}" FontSize="12" Foreground="#F8FAFC" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    <TextBlock Text="{Binding TimeAgo, StringFormat='Vừa xong lúc {0} • Tự ẩn sau 7s'}" FontSize="10" Foreground="#94A3B8" Margin="0,4,0,0" />
+                                </StackPanel>
+
+                                <!-- Nút đóng nhanh -->
+                                <Button Grid.Column="2" Content="✕"
+                                        Width="22" Height="22" Padding="0" FontSize="10" VerticalAlignment="Top"
+                                        Background="#1E293B" Foreground="#94A3B8" BorderThickness="0" Cursor="Hand"
+                                        Command="{Binding DismissCommand}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
     </Grid>
 </Window>
