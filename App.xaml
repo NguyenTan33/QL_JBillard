@@ -17,6 +17,7 @@
             <converters:SmartVisibilityConverter x:Key="IntToVisConverter" />
             <converters:SmartVisibilityConverter x:Key="SmartVisibilityConverter" />
             <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisConverter" />
+            <converters:ImageFileToVisibilityConverter x:Key="ImageFileToVisConverter" />
             <converters:StringEqualsConverter x:Key="StringEqualsConverter" />
             <converters:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisConverter" />
 

@@ -131,6 +131,7 @@ public partial class App : Application
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<UserManagementViewModel>();
         services.AddTransient<TableManagementViewModel>();
+        services.AddTransient<CategoryManagementViewModel>();
         services.AddTransient<MainViewModel>();
 
         // Windows

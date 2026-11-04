@@ -5,7 +5,12 @@ namespace QL_JBillard.Services.Interfaces;
 public interface IInventoryService
 {
     List<ProductCategory> GetAllCategories();
+    bool SaveCategory(ProductCategory category);
+    bool DeleteCategory(int categoryId, out string errorMessage);
+
     List<Unit> GetAllUnits();
+    bool SaveUnit(Unit unit);
+    bool DeleteUnit(int unitId, out string errorMessage);
     List<Product> GetAllProducts(int? categoryId = null, string? search = null);
     Product? GetProductById(int productId);
 

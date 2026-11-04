@@ -23,10 +23,77 @@ public class InventoryService : IInventoryService
         return context.ProductCategories.OrderBy(c => c.CategoryName).ToList();
     }
 
+    public bool SaveCategory(ProductCategory category)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        if (category.CategoryId == 0)
+        {
+            context.ProductCategories.Add(category);
+        }
+        else
+        {
+            var existing = context.ProductCategories.Find(category.CategoryId);
+            if (existing == null) return false;
+            existing.CategoryName = category.CategoryName.Trim();
+            existing.IsActive = category.IsActive;
+        }
+        return context.SaveChanges() > 0;
+    }
+
+    public bool DeleteCategory(int categoryId, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        using var context = _contextFactory.CreateDbContext();
+        int productCount = context.Products.Count(p => p.CategoryId == categoryId && p.IsActive);
+        if (productCount > 0)
+        {
+            errorMessage = $"Không thể xóa nhóm này vì đang có {productCount} sản phẩm / món đang thuộc danh mục!";
+            return false;
+        }
+
+        var cat = context.ProductCategories.Find(categoryId);
+        if (cat == null) return false;
+        context.ProductCategories.Remove(cat);
+        return context.SaveChanges() > 0;
+    }
+
     public List<Unit> GetAllUnits()
     {
         using var context = _contextFactory.CreateDbContext();
         return context.Units.OrderBy(u => u.UnitName).ToList();
+    }
+
+    public bool SaveUnit(Unit unit)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        if (unit.UnitId == 0)
+        {
+            context.Units.Add(unit);
+        }
+        else
+        {
+            var existing = context.Units.Find(unit.UnitId);
+            if (existing == null) return false;
+            existing.UnitName = unit.UnitName.Trim();
+        }
+        return context.SaveChanges() > 0;
+    }
+
+    public bool DeleteUnit(int unitId, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        using var context = _contextFactory.CreateDbContext();
+        int productCount = context.Products.Count(p => p.UnitId == unitId && p.IsActive);
+        if (productCount > 0)
+        {
+            errorMessage = $"Không thể xóa đơn vị này vì đang có {productCount} sản phẩm đang sử dụng!";
+            return false;
+        }
+
+        var unit = context.Units.Find(unitId);
+        if (unit == null) return false;
+        context.Units.Remove(unit);
+        return context.SaveChanges() > 0;
     }
 
     public List<Product> GetAllProducts(int? categoryId = null, string? search = null)

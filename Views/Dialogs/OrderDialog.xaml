@@ -6,11 +6,13 @@
         mc:Ignorable="d"
         Title="Quản lý hệ thống bida - Thực Đơn &amp; Gọi Món Nhanh" 
         Icon="pack://application:,,,/Resources/bida.ico"
-        Height="820" Width="1280"
-        WindowStartupLocation="CenterOwner"
+        Height="880" Width="1440"
+        MinWidth="1180" MinHeight="750"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
         Background="{StaticResource BgDarkBrush}">
     
-    <Grid Margin="20">
+    <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -61,9 +63,9 @@
         <!-- 2. Main Body: Chia đôi Thực Đơn (Trái) và Giỏ Gọi (Phải) -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.7*" />
-                <ColumnDefinition Width="16" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="2.1*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="*" MinWidth="370" />
             </Grid.ColumnDefinitions>
 
             <!-- Cột Trái: Danh Sách Món Có Ảnh & Bộ Lọc -->
@@ -82,7 +84,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="12" />
-                            <ColumnDefinition Width="230" />
+                            <ColumnDefinition Width="260" />
                         </Grid.ColumnDefinitions>
 
                         <!-- Ô tìm kiếm -->
@@ -110,35 +112,38 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="#FFFFFF" CornerRadius="10" Margin="6" Width="200" Height="225" 
+                                    <Border Background="#FFFFFF" CornerRadius="12" Margin="8" Width="235" Height="305" 
                                             BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
                                         <Border.Effect>
-                                            <DropShadowEffect BlurRadius="6" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                                            <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.06" ShadowDepth="2" Color="Black" />
                                         </Border.Effect>
                                         <Grid>
                                             <Grid.RowDefinitions>
-                                                <RowDefinition Height="95" />
+                                                <RowDefinition Height="155" />
                                                 <RowDefinition Height="*" />
                                                 <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
 
                                             <!-- 1. Vùng Ảnh Món Ăn / Thumbnail Minh Họa -->
-                                            <Border Grid.Row="0" CornerRadius="10,10,0,0" ClipToBounds="True" Background="#F1F5F9">
+                                            <Border Grid.Row="0" CornerRadius="12,12,0,0" ClipToBounds="True" Background="#F8FAFC">
                                                 <Grid>
-                                                    <!-- Ảnh nếu có -->
-                                                    <Image Source="{Binding ImagePath}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                           Visibility="{Binding ImagePath, Converter={StaticResource BoolToVisConverter}}" />
+                                                    <!-- Ảnh nếu có (Kiểm tra file thật trên ổ đĩa) -->
+                                                    <Image Source="{Binding ImagePath}" Stretch="Uniform" Margin="8" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Visibility="{Binding ImagePath, Converter={StaticResource ImageFileToVisConverter}}" />
 
                                                     <!-- Fallback hình minh họa theo nhóm danh mục nếu chưa có file ảnh -->
-                                                    <Border Visibility="{Binding ImagePath, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}"
-                                                            Background="#F8FAFC">
+                                                    <Border Visibility="{Binding ImagePath, Converter={StaticResource ImageFileToVisConverter}, ConverterParameter=Inverse}"
+                                                            Background="#F1F5F9">
                                                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                            <TextBlock FontSize="34" HorizontalAlignment="Center">
+                                                            <TextBlock FontSize="46" HorizontalAlignment="Center">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">
                                                                         <Setter Property="Text" Value="🍽️" />
                                                                         <Style.Triggers>
                                                                             <DataTrigger Binding="{Binding Category.CategoryName}" Value="Đồ Uống Lon &amp; Chai">
+                                                                                <Setter Property="Text" Value="🥤" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Category.CategoryName}" Value="Nước Giải Khát">
                                                                                 <Setter Property="Text" Value="🥤" />
                                                                             </DataTrigger>
                                                                             <DataTrigger Binding="{Binding Category.CategoryName}" Value="Cà Phê &amp; Pha Chế">
@@ -150,6 +155,12 @@
                                                                             <DataTrigger Binding="{Binding Category.CategoryName}" Value="Đồ Ăn Nhanh Chế Biến">
                                                                                 <Setter Property="Text" Value="🍜" />
                                                                             </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Category.CategoryName}" Value="Đồ Ăn Nhanh">
+                                                                                <Setter Property="Text" Value="🍜" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Category.CategoryName}" Value="Thuốc Lá">
+                                                                                <Setter Property="Text" Value="🚬" />
+                                                                            </DataTrigger>
                                                                             <DataTrigger Binding="{Binding Category.CategoryName}" Value="Phụ Kiện Bida">
                                                                                 <Setter Property="Text" Value="🎱" />
                                                                             </DataTrigger>
@@ -157,30 +168,36 @@
                                                                     </Style>
                                                                 </TextBlock.Style>
                                                             </TextBlock>
-                                                            <TextBlock Text="{Binding Category.CategoryName}" FontSize="10" FontWeight="SemiBold" 
-                                                                       Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                                                            <TextBlock Text="{Binding Category.CategoryName}" FontSize="11" FontWeight="Bold" 
+                                                                       Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,0" />
                                                         </StackPanel>
+                                                    </Border>
+
+                                                    <!-- Badge Nhóm danh mục nổi bật góc trên trái -->
+                                                    <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8" Background="#EEF2F6" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" Padding="6,2">
+                                                        <TextBlock Text="{Binding Category.CategoryName}" FontSize="10" FontWeight="Bold" Foreground="#475569" />
+                                                    </Border>
+
+                                                    <!-- Badge Tồn kho góc trên phải -->
+                                                    <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8" Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="4" Padding="6,2"
+                                                            Visibility="{Binding IsInventoryItem, Converter={StaticResource BoolToVisConverter}}">
+                                                        <TextBlock Text="{Binding InventoryItem.QuantityOnHand, StringFormat='Kho: {0}'}" FontSize="10" FontWeight="Bold" Foreground="#047857" />
                                                     </Border>
                                                 </Grid>
                                             </Border>
 
-                                            <!-- 2. Thông tin tên món, giá tiền, tồn kho -->
-                                            <StackPanel Grid.Row="1" Margin="10,8,10,4">
-                                                <TextBlock Text="{Binding ProductName}" FontSize="13" FontWeight="Bold" 
-                                                           Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" MaxHeight="36" TextTrimming="CharacterEllipsis" />
+                                            <!-- 2. Thông tin tên món, giá tiền -->
+                                            <StackPanel Grid.Row="1" Margin="12,10,12,4">
+                                                <TextBlock Text="{Binding ProductName}" FontSize="13.5" FontWeight="Bold" 
+                                                           Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" MaxHeight="38" TextTrimming="CharacterEllipsis" />
                                                 
-                                                <Grid Margin="0,4,0,0">
-                                                    <TextBlock Text="{Binding SellingPrice, Converter={StaticResource CurrencyConverter}}" 
-                                                               FontSize="14" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
-                                                    <TextBlock Text="{Binding InventoryItem.QuantityOnHand, StringFormat='Kho: {0}'}" 
-                                                               FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"
-                                                               Visibility="{Binding IsInventoryItem, Converter={StaticResource BoolToVisConverter}}" />
-                                                </Grid>
+                                                <TextBlock Text="{Binding SellingPrice, Converter={StaticResource CurrencyConverter}}" 
+                                                           FontSize="16" FontWeight="ExtraBold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,4,0,0" />
                                             </StackPanel>
 
                                             <!-- 3. Nút Thêm vào giỏ -->
-                                            <Button Grid.Row="2" Content="+ Thêm Vào Giỏ" Style="{StaticResource PrimaryButton}" 
-                                                    Height="32" Margin="10,0,10,10" FontSize="12" FontWeight="Bold"
+                                            <Button Grid.Row="2" Content="🛒 + Thêm Vào Giỏ" Style="{StaticResource PrimaryButton}" 
+                                                    Height="34" Margin="12,0,12,12" FontSize="12.5" FontWeight="Bold"
                                                     Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}" />
                                         </Grid>

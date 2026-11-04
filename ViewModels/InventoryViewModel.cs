@@ -1,4 +1,7 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QL_JBillard.Domain.Entities;
@@ -317,5 +320,33 @@ public partial class InventoryViewModel : ObservableObject
     {
         IsImportingStock = false;
         ImportingProduct = null;
+    }
+
+    [RelayCommand]
+    public void OpenCategoryManager()
+    {
+        var vm = new CategoryManagementViewModel(_inventoryService);
+        var dialog = new Views.Dialogs.CategoryManagementDialog(vm)
+        {
+            Owner = Application.Current?.MainWindow
+        };
+        dialog.ShowDialog();
+
+        // Tải lại toàn bộ danh mục & đơn vị tính sau khi quản lý
+        var currentSelectedCatId = FormSelectedCategory?.CategoryId;
+        var currentSelectedUnitId = FormSelectedUnit?.UnitId;
+
+        LoadData();
+
+        if (currentSelectedCatId.HasValue)
+        {
+            FormSelectedCategory = Categories.FirstOrDefault(c => c.CategoryId == currentSelectedCatId.Value) 
+                                ?? Categories.FirstOrDefault(c => c.CategoryId > 0);
+        }
+        if (currentSelectedUnitId.HasValue)
+        {
+            FormSelectedUnit = Units.FirstOrDefault(u => u.UnitId == currentSelectedUnitId.Value) 
+                            ?? Units.FirstOrDefault();
+        }
     }
 }

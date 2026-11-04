@@ -164,11 +164,29 @@
                         <TextBox Text="{Binding FormProductName, UpdateSourceTrigger=PropertyChanged}" Height="34" Margin="0,0,0,12" />
 
                         <!-- Danh mục & Đơn vị tính -->
-                        <TextBlock Text="NHÓM DANH MỤC" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
-                        <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding FormSelectedCategory}" DisplayMemberPath="CategoryName" Height="34" Margin="0,0,0,12" />
+                        <TextBlock Text="NHÓM DANH MỤC (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="6" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" ItemsSource="{Binding Categories}" SelectedItem="{Binding FormSelectedCategory}" DisplayMemberPath="CategoryName" Height="34" />
+                            <Button Grid.Column="2" Content="⚙️ Quản Lý" Style="{StaticResource SecondaryButton}" Height="34" Padding="10,0" FontSize="11" FontWeight="Bold"
+                                    Command="{Binding OpenCategoryManagerCommand}" ToolTip="Thêm mới, đổi tên hoặc quản lý danh mục thực đơn" />
+                        </Grid>
 
-                        <TextBlock Text="ĐƠN VỊ TÍNH" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
-                        <ComboBox ItemsSource="{Binding Units}" SelectedItem="{Binding FormSelectedUnit}" DisplayMemberPath="UnitName" Height="34" Margin="0,0,0,12" />
+                        <TextBlock Text="ĐƠN VỊ TÍNH (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="6" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" ItemsSource="{Binding Units}" SelectedItem="{Binding FormSelectedUnit}" DisplayMemberPath="UnitName" Height="34" />
+                            <Button Grid.Column="2" Content="➕ Thêm ĐVT" Style="{StaticResource SecondaryButton}" Height="34" Padding="10,0" FontSize="11" FontWeight="Bold"
+                                    Command="{Binding OpenCategoryManagerCommand}" ToolTip="Thêm đơn vị tính mới (Bao, Điếu, Thùng, Khay, Phần, Đĩa...)" />
+                        </Grid>
 
                         <!-- Giá vốn & Giá bán -->
                         <Grid Margin="0,0,0,12">

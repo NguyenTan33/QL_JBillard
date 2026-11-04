@@ -64,10 +64,21 @@ public static class ProductImageGenerator
                 RenderProductImage(p, expectedFile);
             }
 
-            // Gán đường dẫn vào DB nếu chưa có hoặc khác file
+            // Gán đường dẫn vào DB nếu chưa có hoặc file không tồn tại
             if (string.IsNullOrWhiteSpace(p.ImagePath) || !File.Exists(p.ImagePath))
             {
-                p.ImagePath = expectedFile;
+                // Ưu tiên ảnh thật do người dùng tải lên có mã sản phẩm
+                var userFile = Directory.GetFiles(outputFolder, $"{p.ProductCode.ToUpperInvariant()}_*.*")
+                    .FirstOrDefault(f => File.Exists(f));
+
+                if (userFile != null)
+                {
+                    p.ImagePath = userFile;
+                }
+                else
+                {
+                    p.ImagePath = expectedFile;
+                }
                 hasChanges = true;
             }
         }
