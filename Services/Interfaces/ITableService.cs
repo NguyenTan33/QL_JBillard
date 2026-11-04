@@ -31,6 +31,6 @@ public interface ITableService
     bool DeleteTimeSlot(int slotId);
 
     List<PlayCombo> GetCombos(int? tableTypeId = null, bool activeOnly = false);
-    bool SaveCombo(PlayCombo combo);
+    bool SaveCombo(PlayCombo combo, IEnumerable<(int ProductId, int Quantity)>? items = null);
     bool DeleteCombo(int comboId);
 }

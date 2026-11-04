@@ -15,4 +15,5 @@ public class PlayCombo
 
     // Navigation
     public virtual TableType? TableType { get; set; }
+    public virtual ICollection<PlayComboItem> Items { get; set; } = new List<PlayComboItem>();
 }

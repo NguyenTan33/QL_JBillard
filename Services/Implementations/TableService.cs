@@ -186,6 +186,51 @@ public class TableService : ITableService
 
     private void AddComboOrderItems(AppDbContext context, TableSession session, PlayCombo combo, int userId, DateTime now)
     {
+        // 1. Tải danh sách món đã gán vào gói combo theo chuẩn quan hệ 3NF (PlayComboItem)
+        var comboWithItems = context.PlayCombos
+            .Include(c => c.Items)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefault(c => c.ComboId == combo.ComboId);
+
+        var comboItems = comboWithItems?.Items?.ToList();
+
+        if (comboItems != null && comboItems.Any())
+        {
+            foreach (var cItem in comboItems)
+            {
+                var product = cItem.Product ?? context.Products.Find(cItem.ProductId);
+                if (product == null) continue;
+
+                var orderItem = new OrderItem
+                {
+                    SessionId = session.SessionId,
+                    ProductId = product.ProductId,
+                    Quantity = cItem.Quantity,
+                    UnitPrice = 0, // Đã bao gồm trong giá trọn gói Combo
+                    TotalAmount = 0,
+                    OrderedByUserId = userId,
+                    OrderedAt = now,
+                    IsCompleted = false,
+                    IsComboItem = true,
+                    ComboName = combo.ComboName
+                };
+                context.OrderItems.Add(orderItem);
+
+                // Tự động trừ tồn kho nếu là sản phẩm quản lý tồn kho (IsInventoryItem = true)
+                if (product.IsInventoryItem)
+                {
+                    var inv = context.InventoryItems.FirstOrDefault(i => i.ProductId == product.ProductId);
+                    if (inv != null && inv.QuantityOnHand >= cItem.Quantity)
+                    {
+                        inv.QuantityOnHand -= cItem.Quantity;
+                    }
+                }
+            }
+            context.SaveChanges();
+            return;
+        }
+
+        // 2. Fallback an toàn nếu gói combo cũ chưa có PlayComboItem
         var itemsToAdd = new List<(string ProductCode, string FallbackName, int Quantity)>();
 
         string comboName = (combo.ComboName ?? "").ToLower();
@@ -473,7 +518,13 @@ public class TableService : ITableService
     public List<PlayCombo> GetCombos(int? tableTypeId = null, bool activeOnly = false)
     {
         using var context = _contextFactory.CreateDbContext();
-        var query = context.PlayCombos.Include(c => c.TableType).AsQueryable();
+        var query = context.PlayCombos
+            .Include(c => c.TableType)
+            .Include(c => c.Items)
+                .ThenInclude(i => i.Product)
+                    .ThenInclude(p => p.Category)
+            .AsQueryable();
+
         if (activeOnly)
         {
             query = query.Where(c => c.IsActive);
@@ -485,17 +536,58 @@ public class TableService : ITableService
         return query.ToList().OrderBy(c => c.Price).ToList();
     }
 
-    public bool SaveCombo(PlayCombo combo)
+    public bool SaveCombo(PlayCombo combo, IEnumerable<(int ProductId, int Quantity)>? items = null)
     {
         using var context = _contextFactory.CreateDbContext();
+        PlayCombo? dbCombo = null;
+
         if (combo.ComboId == 0)
         {
-            context.PlayCombos.Add(combo);
+            dbCombo = new PlayCombo();
+            context.PlayCombos.Add(dbCombo);
         }
         else
         {
-            context.PlayCombos.Update(combo);
+            dbCombo = context.PlayCombos
+                .Include(c => c.Items)
+                .FirstOrDefault(c => c.ComboId == combo.ComboId);
+            if (dbCombo == null) return false;
         }
+
+        dbCombo.ComboName = combo.ComboName;
+        dbCombo.TableTypeId = combo.TableTypeId;
+        dbCombo.Price = combo.Price;
+        dbCombo.DurationMinutes = combo.DurationMinutes;
+        dbCombo.Description = combo.Description;
+        dbCombo.IsActive = combo.IsActive;
+
+        // Cập nhật danh sách món tặng kèm PlayComboItem theo chuẩn 3NF
+        if (items != null)
+        {
+            dbCombo.Items.Clear();
+
+            var summaryList = new List<string>();
+            foreach (var (productId, qty) in items)
+            {
+                if (qty <= 0) continue;
+                var prod = context.Products.Find(productId);
+                if (prod == null) continue;
+
+                dbCombo.Items.Add(new PlayComboItem
+                {
+                    ProductId = productId,
+                    Quantity = qty
+                });
+                summaryList.Add($"{qty}x {prod.ProductName}");
+            }
+
+            dbCombo.IncludedItems = summaryList.Any() ? string.Join(", ", summaryList) : (combo.IncludedItems ?? "Không có");
+        }
+        else
+        {
+            dbCombo.IncludedItems = combo.IncludedItems;
+        }
+
         return context.SaveChanges() > 0;
     }
 

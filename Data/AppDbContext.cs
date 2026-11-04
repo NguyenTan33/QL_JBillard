@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<TableType> TableTypes => Set<TableType>();
     public DbSet<TimeSlotPricing> TimeSlotPricings => Set<TimeSlotPricing>();
     public DbSet<PlayCombo> PlayCombos => Set<PlayCombo>();
+    public DbSet<PlayComboItem> PlayComboItems => Set<PlayComboItem>();
     public DbSet<Table> Tables => Set<Table>();
     public DbSet<User> Users => Set<User>();
     public DbSet<MembershipTier> MembershipTiers => Set<MembershipTier>();
@@ -120,6 +121,24 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.TableTypeId)
                   .OnDelete(DeleteBehavior.SetNull);
+            entity.HasMany(e => e.Items)
+                  .WithOne(i => i.PlayCombo)
+                  .HasForeignKey(i => i.ComboId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 3d. PlayComboItem (Chuẩn 3NF liên kết món trong thực đơn)
+        modelBuilder.Entity<PlayComboItem>(entity =>
+        {
+            entity.HasKey(e => e.ComboItemId);
+            entity.HasOne(e => e.PlayCombo)
+                  .WithMany(c => c.Items)
+                  .HasForeignKey(e => e.ComboId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Product)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProductId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         // 4. Table

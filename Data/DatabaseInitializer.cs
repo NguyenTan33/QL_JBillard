@@ -80,6 +80,16 @@ public static class DatabaseInitializer
                     FOREIGN KEY (TableTypeId) REFERENCES TableTypes(TableTypeId) ON DELETE SET NULL
                 );
             ");
+            context.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS PlayComboItems (
+                    ComboItemId INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ComboId INTEGER NOT NULL,
+                    ProductId INTEGER NOT NULL,
+                    Quantity INTEGER NOT NULL DEFAULT 1,
+                    FOREIGN KEY (ComboId) REFERENCES PlayCombos(ComboId) ON DELETE CASCADE,
+                    FOREIGN KEY (ProductId) REFERENCES Products(ProductId) ON DELETE CASCADE
+                );
+            ");
         }
         catch { }
 
@@ -303,35 +313,74 @@ public static class DatabaseInitializer
         // Khởi tạo Gói Combo bida + F&B nếu chưa có
         if (!context.PlayCombos.Any())
         {
-            context.PlayCombos.AddRange(
-                new PlayCombo
+            var pSting = context.Products.FirstOrDefault(p => p.ProductCode == "STING");
+            var pTraDao = context.Products.FirstOrDefault(p => p.ProductCode == "TRA_DAO");
+            var pMiBo = context.Products.FirstOrDefault(p => p.ProductCode == "MI_BO_TRUNG");
+
+            var c1 = new PlayCombo
+            {
+                ComboName = "Combo 3 Tiếng + 2 Nước",
+                Price = 150_000,
+                DurationMinutes = 180,
+                IncludedItems = "2x Nước Tăng Lực Sting Dâu",
+                Description = "Gói 3 giờ chơi bida tặng 2 lon nước ngọt/nước ép, siêu tiết kiệm",
+                IsActive = true
+            };
+            var c2 = new PlayCombo
+            {
+                ComboName = "Combo Sinh Viên 2h + 2 Trà Đá",
+                Price = 70_000,
+                DurationMinutes = 120,
+                IncludedItems = "2x Trà Đào Cam Sả Tươi",
+                Description = "Gói chơi 2 tiếng giá học sinh sinh viên",
+                IsActive = true
+            };
+            var c3 = new PlayCombo
+            {
+                ComboName = "Combo Cày Đêm 4h + 2 Sting + 1 Mì",
+                Price = 220_000,
+                DurationMinutes = 240,
+                IncludedItems = "2x Nước Tăng Lực Sting Dâu, 1x Mì Xào Bò Trứng Ốp La",
+                Description = "Gói chơi 4 tiếng xuyên đêm kèm đồ ăn khuya",
+                IsActive = true
+            };
+
+            context.PlayCombos.AddRange(c1, c2, c3);
+            context.SaveChanges();
+
+            if (pSting != null) c1.Items.Add(new PlayComboItem { ComboId = c1.ComboId, ProductId = pSting.ProductId, Quantity = 2 });
+            if (pTraDao != null) c2.Items.Add(new PlayComboItem { ComboId = c2.ComboId, ProductId = pTraDao.ProductId, Quantity = 2 });
+            if (pSting != null) c3.Items.Add(new PlayComboItem { ComboId = c3.ComboId, ProductId = pSting.ProductId, Quantity = 2 });
+            if (pMiBo != null) c3.Items.Add(new PlayComboItem { ComboId = c3.ComboId, ProductId = pMiBo.ProductId, Quantity = 1 });
+            context.SaveChanges();
+        }
+        else if (!context.PlayComboItems.Any())
+        {
+            var pSting = context.Products.FirstOrDefault(p => p.ProductCode == "STING");
+            var pTraDao = context.Products.FirstOrDefault(p => p.ProductCode == "TRA_DAO");
+            var pMiBo = context.Products.FirstOrDefault(p => p.ProductCode == "MI_BO_TRUNG");
+
+            var allCombos = context.PlayCombos.ToList();
+            foreach (var combo in allCombos)
+            {
+                string name = combo.ComboName.ToLower();
+                if (name.Contains("sinh viên") || name.Contains("trà đá"))
                 {
-                    ComboName = "Combo 3 Tiếng + 2 Nước",
-                    Price = 150_000,
-                    DurationMinutes = 180,
-                    IncludedItems = "2 Lon nước ngọt / Sting tùy chọn",
-                    Description = "Gói 3 giờ chơi bida tặng 2 lon nước ngọt/nước ép, siêu tiết kiệm",
-                    IsActive = true
-                },
-                new PlayCombo
-                {
-                    ComboName = "Combo Sinh Viên 2h + 2 Trà Đá",
-                    Price = 70_000,
-                    DurationMinutes = 120,
-                    IncludedItems = "2 Ly Trà đá mát lạnh",
-                    Description = "Gói chơi 2 tiếng giá học sinh sinh viên",
-                    IsActive = true
-                },
-                new PlayCombo
-                {
-                    ComboName = "Combo Cày Đêm 4h + 2 Sting + 1 Mì",
-                    Price = 220_000,
-                    DurationMinutes = 240,
-                    IncludedItems = "2 Chai Sting + 1 Mì bò trứng ốp la",
-                    Description = "Gói chơi 4 tiếng xuyên đêm kèm đồ ăn khuya",
-                    IsActive = true
+                    if (pTraDao != null) context.PlayComboItems.Add(new PlayComboItem { ComboId = combo.ComboId, ProductId = pTraDao.ProductId, Quantity = 2 });
+                    combo.IncludedItems = "2x Trà Đào Cam Sả Tươi";
                 }
-            );
+                else if (name.Contains("cày đêm") || name.Contains("mì"))
+                {
+                    if (pSting != null) context.PlayComboItems.Add(new PlayComboItem { ComboId = combo.ComboId, ProductId = pSting.ProductId, Quantity = 2 });
+                    if (pMiBo != null) context.PlayComboItems.Add(new PlayComboItem { ComboId = combo.ComboId, ProductId = pMiBo.ProductId, Quantity = 1 });
+                    combo.IncludedItems = "2x Nước Tăng Lực Sting Dâu, 1x Mì Xào Bò Trứng Ốp La";
+                }
+                else
+                {
+                    if (pSting != null) context.PlayComboItems.Add(new PlayComboItem { ComboId = combo.ComboId, ProductId = pSting.ProductId, Quantity = 2 });
+                    combo.IncludedItems = "2x Nước Tăng Lực Sting Dâu";
+                }
+            }
             context.SaveChanges();
         }
 

@@ -13,6 +13,7 @@ namespace QL_JBillard.ViewModels;
 public partial class TableManagementViewModel : ObservableObject
 {
     private readonly ITableService _tableService;
+    private readonly IInventoryService _inventoryService;
     private readonly IAuthService _authService;
 
     [ObservableProperty]
@@ -155,7 +156,7 @@ public partial class TableManagementViewModel : ObservableObject
     private int _formComboDurationMinutes = 180;
 
     [ObservableProperty]
-    private string? _formComboIncludedItems = "2 Lon nước ngọt tùy chọn";
+    private string? _formComboIncludedItems;
 
     [ObservableProperty]
     private string? _formComboDescription;
@@ -166,12 +167,26 @@ public partial class TableManagementViewModel : ObservableObject
     [ObservableProperty]
     private bool _isEditingCombo;
 
+    // --- CÁC MÓN F&B CHỌN TỪ THỰC ĐƠN ĐƯỢC TẶNG KÈM THEO COMBO ---
+    [ObservableProperty]
+    private ObservableCollection<Product> _menuProductsList = new();
+
+    [ObservableProperty]
+    private Product? _formComboSelectedProduct;
+
+    [ObservableProperty]
+    private int _formComboItemQuantity = 1;
+
+    [ObservableProperty]
+    private ObservableCollection<ComboItemDto> _formComboSelectedItems = new();
+
     // Sự kiện khi có thay đổi cấu trúc bàn -> làm mới TableMapView
     public event Action? OnTableStructureChanged;
 
-    public TableManagementViewModel(ITableService tableService, IAuthService authService)
+    public TableManagementViewModel(ITableService tableService, IInventoryService inventoryService, IAuthService authService)
     {
         _tableService = tableService;
+        _inventoryService = inventoryService;
         _authService = authService;
         LoadAll();
     }
@@ -204,6 +219,11 @@ public partial class TableManagementViewModel : ObservableObject
         // 4. Tải khung giờ & gói combo
         var slots = _tableService.GetTimeSlots();
         TimeSlotsList = new ObservableCollection<TimeSlotPricing>(slots);
+
+        // Tải danh mục món thực đơn F&B phục vụ chọn món vào Combo
+        var products = _inventoryService.GetAllProducts().Where(p => p.IsActive).ToList();
+        MenuProductsList = new ObservableCollection<Product>(products);
+        FormComboSelectedProduct = MenuProductsList.FirstOrDefault();
 
         var combos = _tableService.GetCombos(activeOnly: false);
         CombosList = new ObservableCollection<PlayCombo>(combos);
@@ -761,10 +781,14 @@ public partial class TableManagementViewModel : ObservableObject
         FormComboSelectedType = null;
         FormComboPrice = 150_000;
         FormComboDurationMinutes = 180;
-        FormComboIncludedItems = "2 Lon nước ngọt tùy chọn";
         FormComboDescription = "Gói 3 tiếng chơi bida kèm đồ uống";
         FormComboIsActive = true;
         IsEditingCombo = false;
+        
+        FormComboSelectedItems.Clear();
+        FormComboItemQuantity = 1;
+        FormComboSelectedProduct = MenuProductsList.FirstOrDefault();
+        UpdateComboIncludedSummary();
     }
 
     [RelayCommand]
@@ -776,11 +800,81 @@ public partial class TableManagementViewModel : ObservableObject
         FormComboSelectedType = TableTypesList.FirstOrDefault(t => t.TableTypeId == combo.TableTypeId);
         FormComboPrice = combo.Price;
         FormComboDurationMinutes = combo.DurationMinutes;
-        FormComboIncludedItems = combo.IncludedItems;
         FormComboDescription = combo.Description;
         FormComboIsActive = combo.IsActive;
         IsEditingCombo = true;
+
+        FormComboSelectedItems.Clear();
+        if (combo.Items != null && combo.Items.Any())
+        {
+            foreach (var item in combo.Items)
+            {
+                FormComboSelectedItems.Add(new ComboItemDto
+                {
+                    ProductId = item.ProductId,
+                    ProductName = item.Product?.ProductName ?? $"Món #{item.ProductId}",
+                    CategoryName = item.Product?.Category?.CategoryName ?? "F&B",
+                    Quantity = item.Quantity
+                });
+            }
+        }
+        UpdateComboIncludedSummary();
         Message = $"Đang chỉnh sửa gói combo: {combo.ComboName}";
+    }
+
+    [RelayCommand]
+    public void AddProductToCombo()
+    {
+        Message = null;
+        if (FormComboSelectedProduct == null)
+        {
+            Message = "⚠️ Vui lòng chọn món F&B từ thực đơn để thêm vào combo!";
+            return;
+        }
+
+        if (FormComboItemQuantity <= 0)
+        {
+            FormComboItemQuantity = 1;
+        }
+
+        var existing = FormComboSelectedItems.FirstOrDefault(x => x.ProductId == FormComboSelectedProduct.ProductId);
+        if (existing != null)
+        {
+            existing.Quantity += FormComboItemQuantity;
+        }
+        else
+        {
+            FormComboSelectedItems.Add(new ComboItemDto
+            {
+                ProductId = FormComboSelectedProduct.ProductId,
+                ProductName = FormComboSelectedProduct.ProductName,
+                CategoryName = FormComboSelectedProduct.Category?.CategoryName ?? "F&B",
+                Quantity = FormComboItemQuantity
+            });
+        }
+
+        UpdateComboIncludedSummary();
+        FormComboItemQuantity = 1;
+    }
+
+    [RelayCommand]
+    public void RemoveProductFromCombo(ComboItemDto? item)
+    {
+        if (item == null) return;
+        FormComboSelectedItems.Remove(item);
+        UpdateComboIncludedSummary();
+    }
+
+    private void UpdateComboIncludedSummary()
+    {
+        if (FormComboSelectedItems.Any())
+        {
+            FormComboIncludedItems = string.Join(", ", FormComboSelectedItems.Select(x => $"{x.Quantity}x {x.ProductName}"));
+        }
+        else
+        {
+            FormComboIncludedItems = string.Empty;
+        }
     }
 
     [RelayCommand]
@@ -818,8 +912,11 @@ public partial class TableManagementViewModel : ObservableObject
                 Description = FormComboDescription?.Trim(),
                 IsActive = FormComboIsActive
             };
-            _tableService.SaveCombo(combo);
-            Message = $"✅ Đã lưu gói combo '{combo.ComboName}' ({combo.Price:N0} đ)!";
+
+            var itemsList = FormComboSelectedItems.Select(x => (x.ProductId, x.Quantity)).ToList();
+            _tableService.SaveCombo(combo, itemsList);
+
+            Message = $"✅ Đã lưu gói combo '{combo.ComboName}' ({combo.Price:N0} đ) kèm {itemsList.Count} món F&B!";
             LoadAll();
         }
         catch (Exception ex)
@@ -858,4 +955,24 @@ public partial class TableManagementViewModel : ObservableObject
             MessageBox.Show($"Không thể xóa gói combo '{combo.ComboName}' do có dữ liệu hóa đơn/phiên chơi đang tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
+}
+
+/// <summary>
+/// DTO trình diễn món thực đơn F&amp;B được tặng kèm trong gói combo
+/// </summary>
+public partial class ComboItemDto : ObservableObject
+{
+    [ObservableProperty]
+    private int _productId;
+
+    [ObservableProperty]
+    private string _productName = string.Empty;
+
+    [ObservableProperty]
+    private string _categoryName = string.Empty;
+
+    [ObservableProperty]
+    private int _quantity = 1;
+
+    public string DisplayText => $"{Quantity}x {ProductName}";
 }

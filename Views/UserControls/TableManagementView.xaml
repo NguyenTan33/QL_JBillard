@@ -92,7 +92,7 @@
                                 <DataGridTextColumn Header="KHU VỰC" Binding="{Binding Area.AreaName}" Width="*" MinWidth="130" />
                                 <DataGridTextColumn Header="TẦNG" Binding="{Binding Area.Floor.FloorName}" Width="85" />
                                 <DataGridTextColumn Header="LOẠI BÀN" Binding="{Binding TableType.TypeName}" Width="120" />
-                                <DataGridTextColumn Header="GIÁ GIỜ" Binding="{Binding TableType.DefaultHourlyRate, Converter={StaticResource CurrencyConverter}}" Width="95" FontWeight="SemiBold" />
+                                <DataGridTextColumn Header="GIÁ GỐC / H" Binding="{Binding TableType.DefaultHourlyRate, Converter={StaticResource CurrencyConverter}}" Width="95" FontWeight="SemiBold" />
                                 
                                 <DataGridTemplateColumn Header="TRẠNG THÁI" Width="95">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -145,9 +145,10 @@
                             <!-- Hiển thị giá giờ của loại đã chọn -->
                             <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,14">
                                 <StackPanel>
-                                    <TextBlock Text="ĐỊNH MỨC GIÁ GIỜ ÁP DỤNG:" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                    <TextBlock Text="ĐỊNH MỨC GIÁ GIỜ GỐC THEO LOẠI BÀN:" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
                                     <TextBlock Text="{Binding FormTableSelectedType.DefaultHourlyRate, Converter={StaticResource CurrencyConverter}, StringFormat='{}{0} / giờ'}" 
                                                FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,2,0,0" />
+                                    <TextBlock Text="(Tự động chuyển đổi theo Khung Giờ nếu có cấu hình)" FontSize="10" FontStyle="Italic" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3,0,0" />
                                 </StackPanel>
                             </Border>
 
@@ -305,7 +306,7 @@
                                   HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="TÊN LOẠI BÀN" Binding="{Binding TypeName}" Width="*" FontWeight="Bold" />
-                                <DataGridTextColumn Header="GIÁ GIỜ CHƠI (VNĐ)" Binding="{Binding DefaultHourlyRate, Converter={StaticResource CurrencyConverter}}" Width="150" FontWeight="Bold" />
+                                <DataGridTextColumn Header="GIÁ GIỜ GỐC / MẶC ĐỊNH (VNĐ)" Binding="{Binding DefaultHourlyRate, Converter={StaticResource CurrencyConverter}}" Width="190" FontWeight="Bold" />
                                 <DataGridTextColumn Header="TỐI THIỂU (PHÚT)" Binding="{Binding MinPlayMinutes}" Width="120" />
                                 <DataGridTemplateColumn Header="THAO TÁC" Width="130">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -329,12 +330,13 @@
                 <!-- Form Thêm / Cập Nhật Loại Bàn & Giá Giờ -->
                 <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="10" Padding="18" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
                     <StackPanel>
-                        <TextBlock Text="CÀI ĐẶT LOẠI BÀN &amp; GIÁ GIỜ" FontSize="14" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,14" />
+                        <TextBlock Text="CÀI ĐẶT LOẠI BÀN &amp; GIÁ GIỜ GỐC" FontSize="14" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,14" />
 
                         <TextBlock Text="TÊN LOẠI BÀN (VD: POOL 9-BALL, CAROM, VIP) (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
                         <TextBox Text="{Binding FormTypeName, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,12" />
 
-                        <TextBlock Text="GIÁ GIỜ CHƠI MẶC ĐỊNH (VNĐ / GIỜ) (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBlock Text="GIÁ GIỜ GỐC MẶC ĐỊNH (VNĐ / GIỜ) (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                        <TextBlock Text="Hệ thống ưu tiên giá Khung Giờ (nếu có); ngoài khung giờ sẽ tính giá gốc này." FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" TextWrapping="Wrap" />
                         <TextBox Text="{Binding FormDefaultHourlyRate, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" FontWeight="Bold" Margin="0,0,0,12" />
 
                         <TextBlock Text="SỐ PHÚT TÍNH TỐI THIỂU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
@@ -521,57 +523,114 @@
 
                         <!-- Form Thêm / Sửa Combo -->
                         <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,10,0,0">
-                            <StackPanel>
-                                <TextBlock Text="THÊM / CẬP NHẬT GÓI COMBO" FontSize="12" FontWeight="Bold" Foreground="#B45309" Margin="0,0,0,8" />
-                                
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="1.4*" />
-                                        <ColumnDefinition Width="8" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="320">
+                                <StackPanel>
+                                    <TextBlock Text="THÊM / CẬP NHẬT GÓI COMBO" FontSize="12" FontWeight="Bold" Foreground="#B45309" Margin="0,0,0,8" />
+                                    
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1.4*" />
+                                            <ColumnDefinition Width="8" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
 
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Tên gói combo (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
-                                        <TextBox Text="{Binding FormComboName, UpdateSourceTrigger=PropertyChanged}" Height="30" />
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Tên gói combo (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                            <TextBox Text="{Binding FormComboName, UpdateSourceTrigger=PropertyChanged}" Height="30" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Giá gói (VNĐ) (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                            <TextBox Text="{Binding FormComboPrice, UpdateSourceTrigger=PropertyChanged}" Height="30" FontWeight="Bold" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="8" />
+                                            <ColumnDefinition Width="1.2*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Thời lượng (Phút) (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                            <TextBox Text="{Binding FormComboDurationMinutes, UpdateSourceTrigger=PropertyChanged}" Height="30" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Áp dụng loại bàn:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                            <ComboBox ItemsSource="{Binding TableTypesList}" SelectedItem="{Binding FormComboSelectedType}" DisplayMemberPath="TypeName" Height="30" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- BỘ CHỌN MÓN F&B TỪ THỰC ĐƠN ĐƯỢC TẶNG KÈM -->
+                                    <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,2,0,8">
+                                        <StackPanel>
+                                            <TextBlock Text="🍳 MÓN THỰC ĐƠN TẶNG KÈM (TỰ ĐỘNG ĐẨY BẾP &amp; TRỪ KHO):" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6" />
+                                            
+                                            <!-- Dòng chọn món + Số lượng + Nút Thêm -->
+                                            <Grid Margin="0,0,0,6">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="6" />
+                                                    <ColumnDefinition Width="50" />
+                                                    <ColumnDefinition Width="6" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <ComboBox Grid.Column="0" ItemsSource="{Binding MenuProductsList}" SelectedItem="{Binding FormComboSelectedProduct}" DisplayMemberPath="ProductName" Height="30" />
+                                                <TextBox Grid.Column="2" Text="{Binding FormComboItemQuantity, UpdateSourceTrigger=PropertyChanged}" Height="30" FontWeight="Bold" HorizontalContentAlignment="Center" ToolTip="Số lượng tặng kèm" />
+                                                <Button Grid.Column="4" Content="➕ Thêm Món" Style="{StaticResource PrimaryButton}" Height="30" Padding="10,0" FontWeight="Bold"
+                                                        Command="{Binding AddProductToComboCommand}" />
+                                            </Grid>
+
+                                            <!-- Danh sách các món đã chọn trong combo kèm nút [Xóa] -->
+                                            <ItemsControl ItemsSource="{Binding FormComboSelectedItems}" Margin="0,0,0,4">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="4" Padding="6,3" Margin="0,2">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                    <TextBlock Text="🍽️ " FontSize="11" />
+                                                                    <TextBlock Text="{Binding ProductName}" FontWeight="Bold" FontSize="11.5" Foreground="{StaticResource TextPrimaryBrush}" />
+                                                                    <TextBlock Text="{Binding CategoryName, StringFormat=' ({0})'}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0,0,0" />
+                                                                </StackPanel>
+                                                                <Border Grid.Column="1" Background="#D1FAE5" CornerRadius="3" Padding="6,1" Margin="6,0">
+                                                                    <TextBlock Text="{Binding Quantity, StringFormat='x{0}'}" FontWeight="Bold" FontSize="11" Foreground="#047857" />
+                                                                </Border>
+                                                                <Button Grid.Column="2" Content="✕" Style="{StaticResource DangerButton}" Height="22" Width="24" Padding="0" FontSize="10" FontWeight="Bold"
+                                                                        Command="{Binding DataContext.RemoveProductFromComboCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip="Xóa món này khỏi combo" />
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <!-- Tóm tắt text -->
+                                            <TextBlock Text="{Binding FormComboIncludedItems, StringFormat='Tóm tắt hiển thị: {0}'}" FontSize="10.5" FontStyle="Italic" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <TextBlock Text="Mô tả / ghi chú gói:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                    <TextBox Text="{Binding FormComboDescription, UpdateSourceTrigger=PropertyChanged}" Height="28" Margin="0,0,0,6" />
+
+                                    <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" TextWrapping="Wrap" />
+
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Content="✕ Làm Mới" Style="{StaticResource SecondaryButton}" Height="30" Padding="10,0" Margin="0,0,6,0"
+                                                Command="{Binding PrepareNewComboCommand}" />
+                                        <Button Content="💾 Lưu Gói Combo" Style="{StaticResource PrimaryButton}" Height="30" Padding="12,0" FontWeight="Bold"
+                                                Command="{Binding SaveComboCommand}" />
                                     </StackPanel>
-
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Giá gói (VNĐ) (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
-                                        <TextBox Text="{Binding FormComboPrice, UpdateSourceTrigger=PropertyChanged}" Height="30" FontWeight="Bold" />
-                                    </StackPanel>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="8" />
-                                        <ColumnDefinition Width="1.4*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Thời lượng (Phút) (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
-                                        <TextBox Text="{Binding FormComboDurationMinutes, UpdateSourceTrigger=PropertyChanged}" Height="30" />
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Đồ uống / F&amp;B tặng kèm:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
-                                        <TextBox Text="{Binding FormComboIncludedItems, UpdateSourceTrigger=PropertyChanged}" Height="30" />
-                                    </StackPanel>
-                                </Grid>
-
-                                <TextBlock Text="Mô tả / ghi chú gói:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
-                                <TextBox Text="{Binding FormComboDescription, UpdateSourceTrigger=PropertyChanged}" Height="28" Margin="0,0,0,6" />
-
-                                <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" TextWrapping="Wrap" />
-
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <Button Content="✕ Làm Mới" Style="{StaticResource SecondaryButton}" Height="30" Padding="10,0" Margin="0,0,6,0"
-                                            Command="{Binding PrepareNewComboCommand}" />
-                                    <Button Content="💾 Lưu Gói Combo" Style="{StaticResource PrimaryButton}" Height="30" Padding="12,0" FontWeight="Bold"
-                                            Command="{Binding SaveComboCommand}" />
                                 </StackPanel>
-                            </StackPanel>
+                            </ScrollViewer>
                         </Border>
                     </Grid>
                 </Border>

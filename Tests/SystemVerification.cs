@@ -364,7 +364,7 @@ public static class SystemVerification
             ctx.SaveChanges();
         }
 
-        var tableMgmtVm = new ViewModels.TableManagementViewModel(tableService, authService);
+        var tableMgmtVm = new ViewModels.TableManagementViewModel(tableService, invService, authService);
 
         // 31.1 Tầng lầu
         tableMgmtVm.FormFloorName = "Tầng 3 Sân Thượng";
