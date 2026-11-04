@@ -1,0 +1,581 @@
+<UserControl x:Class="QL_JBillard.Views.UserControls.TableManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:QL_JBillard.Views.UserControls"
+             mc:Ignorable="d" 
+             d:DesignHeight="720" d:DesignWidth="1100"
+             Background="{StaticResource BgDarkBrush}">
+    
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header & Segmented Sub-Tabs -->
+        <Border Grid.Row="0" Background="#FFFFFF" CornerRadius="10" Padding="16,12" Margin="0,0,0,14" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="🗂️ QUẢN LÝ BÀN, KHU VỰC &amp; TẦNG LẦU" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                    <TextBlock Text="Cấu hình sơ đồ bàn chơi, phân chia khu vực và định mức giá giờ của quán" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+
+                <!-- 3 Sub-Tabs: Bàn Chơi / Khu Vực & Tầng / Loại Bàn & Giá Giờ -->
+                <Border Grid.Column="2" Background="#F1F5F9" CornerRadius="8" Padding="4" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Content="🎱 Danh Sách Bàn Chơi" Style="{StaticResource SegmentedTabRadioStyle}" 
+                                     IsChecked="{Binding ActiveSubTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=TABLES, Mode=OneWay}"
+                                     Command="{Binding SetSubTabCommand}" CommandParameter="TABLES" />
+                        <RadioButton Content="📍 Khu Vực &amp; Tầng Lầu" Style="{StaticResource SegmentedTabRadioStyle}" 
+                                     IsChecked="{Binding ActiveSubTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=AREAS_FLOORS, Mode=OneWay}"
+                                     Command="{Binding SetSubTabCommand}" CommandParameter="AREAS_FLOORS" />
+                        <RadioButton Content="💰 Loại Bàn &amp; Bảng Giá Giờ" Style="{StaticResource SegmentedTabRadioStyle}" 
+                                     IsChecked="{Binding ActiveSubTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=TYPES_PRICES, Mode=OneWay}"
+                                     Command="{Binding SetSubTabCommand}" CommandParameter="TYPES_PRICES" />
+                        <RadioButton Content="🎁 Khung Giờ &amp; Gói Combo" Style="{StaticResource SegmentedTabRadioStyle}" 
+                                     IsChecked="{Binding ActiveSubTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=SLOTS_COMBOS, Mode=OneWay}"
+                                     Command="{Binding SetSubTabCommand}" CommandParameter="SLOTS_COMBOS" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- 2. Nội dung theo từng Sub-Tab -->
+        <Grid Grid.Row="1">
+            <!-- ======================================================== -->
+            <!-- SUB-TAB 1: QUẢN LÝ BÀN CHƠI (TABLES) -->
+            <!-- ======================================================== -->
+            <Grid Visibility="{Binding ActiveSubTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=TABLES}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="310" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Danh sách Bàn Chơi -->
+                <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="10" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <TextBlock Text="DANH SÁCH BÀN ĐANG HOẠT ĐỘNG TRONG QUÁN" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                            <Button Content="🔄 Tải Lại" Style="{StaticResource SecondaryButton}" Height="30" HorizontalAlignment="Right" 
+                                    Command="{Binding LoadAllCommand}" />
+                        </Grid>
+
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding TablesList}" AutoGenerateColumns="False" 
+                                  CanUserAddRows="False" IsReadOnly="True"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                                  BorderBrush="{StaticResource BorderDarkBrush}" Foreground="{StaticResource TextPrimaryBrush}"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="SỐ BÀN" Binding="{Binding TableNumber}" Width="85" FontWeight="Bold" />
+                                <DataGridTextColumn Header="KHU VỰC" Binding="{Binding Area.AreaName}" Width="*" MinWidth="130" />
+                                <DataGridTextColumn Header="TẦNG" Binding="{Binding Area.Floor.FloorName}" Width="85" />
+                                <DataGridTextColumn Header="LOẠI BÀN" Binding="{Binding TableType.TypeName}" Width="120" />
+                                <DataGridTextColumn Header="GIÁ GIỜ" Binding="{Binding TableType.DefaultHourlyRate, Converter={StaticResource CurrencyConverter}}" Width="95" FontWeight="SemiBold" />
+                                
+                                <DataGridTemplateColumn Header="TRẠNG THÁI" Width="95">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding Status, Converter={StaticResource StatusToColorConverter}}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding Status, Converter={StaticResource StatusToTextConverter}}" FontSize="10" FontWeight="Bold" Foreground="White" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Thao tác -->
+                                <DataGridTemplateColumn Header="THAO TÁC" Width="115">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Padding="7,2" Height="28" Margin="0,0,4,0"
+                                                        Command="{Binding DataContext.EditTableCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="Xóa" Style="{StaticResource DangerButton}" Padding="7,2" Height="28"
+                                                        Command="{Binding DataContext.DeleteTableCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+
+                <!-- Form Thêm / Cập Nhật Bàn -->
+                <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="10" Padding="18" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                    </Border.Effect>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="THÔNG TIN BÀN CHƠI" FontSize="14" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,14" />
+
+                            <TextBlock Text="SỐ HIỆU / TÊN BÀN (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding FormTableNumber, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="13" FontWeight="Bold" Margin="0,0,0,12" />
+
+                            <TextBlock Text="KHU VỰC TRỰC THUỘC (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding AreasList}" SelectedItem="{Binding FormTableSelectedArea}" DisplayMemberPath="AreaName" Height="36" Margin="0,0,0,12" />
+
+                            <TextBlock Text="LOẠI BÀN &amp; GIÁ GIỜ (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding TableTypesList}" SelectedItem="{Binding FormTableSelectedType}" DisplayMemberPath="TypeName" Height="36" Margin="0,0,0,14" />
+
+                            <!-- Hiển thị giá giờ của loại đã chọn -->
+                            <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="ĐỊNH MỨC GIÁ GIỜ ÁP DỤNG:" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{Binding FormTableSelectedType.DefaultHourlyRate, Converter={StaticResource CurrencyConverter}, StringFormat='{}{0} / giờ'}" 
+                                               FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,12" TextWrapping="Wrap" />
+
+                            <Button Content="💾 Lưu Thông Tin Bàn" Style="{StaticResource PrimaryButton}" Height="38" FontWeight="Bold" Margin="0,0,0,8"
+                                    Command="{Binding SaveTableCommand}" />
+                            <Button Content="✕ Làm Mới Form / Thêm Bàn Mới" Style="{StaticResource SecondaryButton}" Height="34"
+                                    Command="{Binding PrepareNewTableCommand}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <!-- ======================================================== -->
+            <!-- SUB-TAB 2: QUẢN LÝ KHU VỰC & TẦNG (AREAS_FLOORS) -->
+            <!-- ======================================================== -->
+            <Grid Visibility="{Binding ActiveSubTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=AREAS_FLOORS}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="1.3*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Cột Trái: Quản Lý Tầng Lầu -->
+                <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="10" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="DANH SÁCH TẦNG LẦU (FLOORS)" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10" />
+
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding FloorsList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="TÊN TẦNG" Binding="{Binding FloorName}" Width="*" FontWeight="Bold" />
+                                <DataGridTextColumn Header="THỨ TỰ" Binding="{Binding OrderIndex}" Width="80" />
+                                <DataGridTemplateColumn Header="THAO TÁC" Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Padding="6,2" Height="26" Margin="0,0,4,0"
+                                                        Command="{Binding DataContext.EditFloorCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="Xóa" Style="{StaticResource DangerButton}" Padding="6,2" Height="26"
+                                                        Command="{Binding DataContext.DeleteFloorCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Form thêm/sửa Tầng -->
+                        <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="THÊM / CẬP NHẬT TẦNG" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,8" />
+                                <TextBox Text="{Binding FormFloorName, UpdateSourceTrigger=PropertyChanged}" Height="34" Margin="0,0,0,6" />
+                                <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" TextWrapping="Wrap" />
+                                <Button Content="Lưu Tầng" Style="{StaticResource PrimaryButton}" Height="32" Command="{Binding SaveFloorCommand}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Cột Phải: Quản Lý Khu Vực -->
+                <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="10" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="DANH SÁCH KHU VỰC TRONG QUÁN (AREAS)" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10" />
+
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding AreasList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="TÊN KHU VỰC" Binding="{Binding AreaName}" Width="*" FontWeight="Bold" />
+                                <DataGridTextColumn Header="THUỘC TẦNG" Binding="{Binding Floor.FloorName}" Width="110" />
+                                <DataGridTextColumn Header="MÔ TẢ" Binding="{Binding Description}" Width="120" />
+                                <DataGridTemplateColumn Header="THAO TÁC" Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Padding="6,2" Height="26" Margin="0,0,4,0"
+                                                        Command="{Binding DataContext.EditAreaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="Xóa" Style="{StaticResource DangerButton}" Padding="6,2" Height="26"
+                                                        Command="{Binding DataContext.DeleteAreaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Form thêm/sửa Khu Vực -->
+                        <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="THÊM / CẬP NHẬT KHU VỰC" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,8" />
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="8" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" Text="{Binding FormAreaName, UpdateSourceTrigger=PropertyChanged}" Height="34" />
+                                    <ComboBox Grid.Column="2" ItemsSource="{Binding FloorsList}" SelectedItem="{Binding FormAreaSelectedFloor}" DisplayMemberPath="FloorName" Height="34" />
+                                </Grid>
+                                <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" TextWrapping="Wrap" />
+                                <Button Content="Lưu Khu Vực" Style="{StaticResource PrimaryButton}" Height="32" Command="{Binding SaveAreaCommand}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ======================================================== -->
+            <!-- SUB-TAB 3: LOẠI BÀN & BẢNG GIÁ GIỜ (TYPES_PRICES) -->
+            <!-- ======================================================== -->
+            <Grid Visibility="{Binding ActiveSubTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=TYPES_PRICES}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Bảng Loại Bàn & Bảng Giá -->
+                <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="10" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="BẢNG GIÁ GIỜ THEO TỪNG LOẠI BÀN BIDA" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12" />
+
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding TableTypesList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="TÊN LOẠI BÀN" Binding="{Binding TypeName}" Width="*" FontWeight="Bold" />
+                                <DataGridTextColumn Header="GIÁ GIỜ CHƠI (VNĐ)" Binding="{Binding DefaultHourlyRate, Converter={StaticResource CurrencyConverter}}" Width="150" FontWeight="Bold" />
+                                <DataGridTextColumn Header="TỐI THIỂU (PHÚT)" Binding="{Binding MinPlayMinutes}" Width="120" />
+                                <DataGridTemplateColumn Header="THAO TÁC" Width="130">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Padding="8,2" Height="28" Margin="0,0,6,0"
+                                                        Command="{Binding DataContext.EditTypeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="Xóa" Style="{StaticResource DangerButton}" Padding="8,2" Height="28"
+                                                        Command="{Binding DataContext.DeleteTableTypeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+
+                <!-- Form Thêm / Cập Nhật Loại Bàn & Giá Giờ -->
+                <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="10" Padding="18" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="CÀI ĐẶT LOẠI BÀN &amp; GIÁ GIỜ" FontSize="14" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,14" />
+
+                        <TextBlock Text="TÊN LOẠI BÀN (VD: POOL 9-BALL, CAROM, VIP) (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding FormTypeName, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,12" />
+
+                        <TextBlock Text="GIÁ GIỜ CHƠI MẶC ĐỊNH (VNĐ / GIỜ) (*)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding FormDefaultHourlyRate, UpdateSourceTrigger=PropertyChanged}" Height="36" FontSize="14" FontWeight="Bold" Margin="0,0,0,12" />
+
+                        <TextBlock Text="SỐ PHÚT TÍNH TỐI THIỂU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding FormMinPlayMinutes, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,16" />
+
+                        <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,12" TextWrapping="Wrap" />
+
+                        <Button Content="💾 Lưu Loại Bàn &amp; Giá Giờ" Style="{StaticResource PrimaryButton}" Height="38" FontWeight="Bold" Margin="0,0,0,8"
+                                Command="{Binding SaveTableTypeCommand}" />
+                        <Button Content="✕ Thêm Loại Bàn Mới" Style="{StaticResource SecondaryButton}" Height="34"
+                                Command="{Binding PrepareNewTypeCommand}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ======================================================== -->
+            <!-- SUB-TAB 4: CÀI ĐẶT KHUNG GIỜ GIÁ & GÓI COMBO (SLOTS_COMBOS) -->
+            <!-- ======================================================== -->
+            <Grid Visibility="{Binding ActiveSubTab, Converter={StaticResource StringEqualsConverter}, ConverterParameter=SLOTS_COMBOS}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- CỘT 1: BẢNG GIÁ THEO KHUNG GIỜ (TIME-SLOT PRICING) -->
+                <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="10" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header Cột 1 -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="⏰ BẢNG GIÁ THEO KHUNG GIỜ (TIME-SLOT)" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="Mở lúc 8h-12h giá 50k, sau 12h tự động tính giá khác theo cài đặt" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- DataGrid Khung Giờ -->
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding TimeSlotsList}" AutoGenerateColumns="False" 
+                                  CanUserAddRows="False" IsReadOnly="True"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                                  BorderBrush="{StaticResource BorderDarkBrush}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="TÊN KHUNG GIỜ" Binding="{Binding SlotName}" Width="*" FontWeight="Bold" />
+                                <DataGridTextColumn Header="LOẠI BÀN" Binding="{Binding TableType.TypeName}" Width="95" />
+                                <DataGridTextColumn Header="KHOẢNG GIỜ" Binding="{Binding TimeRangeDisplay}" Width="95" />
+                                <DataGridTextColumn Header="GIÁ GIỜ" Binding="{Binding HourlyRate, Converter={StaticResource CurrencyConverter}}" Width="90" FontWeight="Bold" />
+                                
+                                <DataGridTemplateColumn Header="THAO TÁC" Width="95">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Padding="6,2" Height="26" Margin="0,0,4,0"
+                                                        Command="{Binding DataContext.EditTimeSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="Xóa" Style="{StaticResource DangerButton}" Padding="6,2" Height="26"
+                                                        Command="{Binding DataContext.DeleteTimeSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Form Thêm / Sửa Khung Giờ -->
+                        <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,10,0,0">
+                            <StackPanel>
+                                <TextBlock Text="THÊM / CẬP NHẬT KHUNG GIỜ" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,8" />
+                                
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1.2*" />
+                                        <ColumnDefinition Width="8" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Tên khung giờ (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding FormSlotName, UpdateSourceTrigger=PropertyChanged}" Height="30" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Loại bàn (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                        <ComboBox ItemsSource="{Binding TableTypesList}" SelectedItem="{Binding FormSlotSelectedType}" DisplayMemberPath="TypeName" Height="30" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="6" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="6" />
+                                        <ColumnDefinition Width="1.2*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Bắt đầu (Giờ):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding FormSlotStartHour, UpdateSourceTrigger=PropertyChanged}" Height="30" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Kết thúc (Giờ):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding FormSlotEndHour, UpdateSourceTrigger=PropertyChanged}" Height="30" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="4">
+                                        <TextBlock Text="Đơn giá (VNĐ/h):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding FormSlotHourlyRate, UpdateSourceTrigger=PropertyChanged}" Height="30" FontWeight="Bold" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="✕ Làm Mới" Style="{StaticResource SecondaryButton}" Height="30" Padding="10,0" Margin="0,0,6,0"
+                                            Command="{Binding PrepareNewTimeSlotCommand}" />
+                                    <Button Content="💾 Lưu Khung Giờ" Style="{StaticResource PrimaryButton}" Height="30" Padding="12,0" FontWeight="Bold"
+                                            Command="{Binding SaveTimeSlotCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- CỘT 2: QUẢN LÝ GÓI COMBO BIDA (COMBOS) -->
+                <Border Grid.Column="2" Background="#FFFFFF" CornerRadius="10" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header Cột 2 -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="🎁 DANH SÁCH GÓI COMBO BIDA &amp; F&amp;B" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <TextBlock Text="Combo trọn gói (VD: Combo 3 tiếng + 2 nước, Combo sinh viên, Combo đêm)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- DataGrid Combos -->
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding CombosList}" AutoGenerateColumns="False" 
+                                  CanUserAddRows="False" IsReadOnly="True"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
+                                  BorderBrush="{StaticResource BorderDarkBrush}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="TÊN GÓI COMBO" Binding="{Binding ComboName}" Width="*" FontWeight="Bold" />
+                                <DataGridTextColumn Header="THỜI LƯỢNG" Binding="{Binding DurationFormatted}" Width="85" />
+                                <DataGridTextColumn Header="GIÁ TRỌN GÓI" Binding="{Binding Price, Converter={StaticResource CurrencyConverter}}" Width="95" FontWeight="Bold" />
+                                <DataGridTextColumn Header="F&amp;B TẶNG KÈM" Binding="{Binding IncludedItems}" Width="120" />
+                                
+                                <DataGridTemplateColumn Header="THAO TÁC" Width="95">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Padding="6,2" Height="26" Margin="0,0,4,0"
+                                                        Command="{Binding DataContext.EditComboCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                                <Button Content="Xóa" Style="{StaticResource DangerButton}" Padding="6,2" Height="26"
+                                                        Command="{Binding DataContext.DeleteComboCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Form Thêm / Sửa Combo -->
+                        <Border Grid.Row="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,10,0,0">
+                            <StackPanel>
+                                <TextBlock Text="THÊM / CẬP NHẬT GÓI COMBO" FontSize="12" FontWeight="Bold" Foreground="#B45309" Margin="0,0,0,8" />
+                                
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1.4*" />
+                                        <ColumnDefinition Width="8" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Tên gói combo (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding FormComboName, UpdateSourceTrigger=PropertyChanged}" Height="30" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Giá gói (VNĐ) (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding FormComboPrice, UpdateSourceTrigger=PropertyChanged}" Height="30" FontWeight="Bold" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="8" />
+                                        <ColumnDefinition Width="1.4*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Thời lượng (Phút) (*):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding FormComboDurationMinutes, UpdateSourceTrigger=PropertyChanged}" Height="30" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Đồ uống / F&amp;B tặng kèm:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding FormComboIncludedItems, UpdateSourceTrigger=PropertyChanged}" Height="30" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="Mô tả / ghi chú gói:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" />
+                                <TextBox Text="{Binding FormComboDescription, UpdateSourceTrigger=PropertyChanged}" Height="28" Margin="0,0,0,6" />
+
+                                <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,6" TextWrapping="Wrap" />
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="✕ Làm Mới" Style="{StaticResource SecondaryButton}" Height="30" Padding="10,0" Margin="0,0,6,0"
+                                            Command="{Binding PrepareNewComboCommand}" />
+                                    <Button Content="💾 Lưu Gói Combo" Style="{StaticResource PrimaryButton}" Height="30" Padding="12,0" FontWeight="Bold"
+                                            Command="{Binding SaveComboCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
