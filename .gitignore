@@ -24,4 +24,5 @@ Backups/
 *.tmp
 commit_history.ps1
 BanThuongMai_Commercial/
+SingleExe_Commercial/
 *.zip
