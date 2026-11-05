@@ -63,9 +63,9 @@
         <!-- 2. Main Body: Chia đôi Thực Đơn (Trái) và Giỏ Gọi (Phải) -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2.1*" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="*" MinWidth="370" />
+                <ColumnDefinition Width="340" />
             </Grid.ColumnDefinitions>
 
             <!-- Cột Trái: Danh Sách Món Có Ảnh & Bộ Lọc -->
@@ -102,17 +102,17 @@
                                   DisplayMemberPath="CategoryName" Height="38" />
                     </Grid>
 
-                    <!-- Grid Sản Phẩm Lớn Có Ảnh / Hình Minh Họa Sinh Động -->
+                    <!-- Grid Sản Phẩm Lớn Có Ảnh / Hình Minh Họa Sinh Động (Dàn đều 4 thẻ/hàng vừa khít) -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Products}">
+                        <ItemsControl ItemsSource="{Binding Products}" HorizontalAlignment="Center">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal" />
+                                    <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="#FFFFFF" CornerRadius="12" Margin="8" Width="235" Height="305" 
+                                    <Border Background="#FFFFFF" CornerRadius="12" Margin="6" Width="236" Height="310" 
                                             BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
                                         <Border.Effect>
                                             <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.06" ShadowDepth="2" Color="Black" />

@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using QL_JBillard.Domain.Enums;
+using QL_JBillard.Domain.Models;
 
 namespace QL_JBillard.Domain.Entities;
 
@@ -12,6 +14,7 @@ public class TableSession
     public DateTime StartTime { get; set; } = DateTime.Now;
     public DateTime? EndTime { get; set; }
     public int TotalPlayMinutes { get; set; } = 0;
+    public int AccumulatedPlayMinutes { get; set; } = 0;
     
     // Lưu lại giá giờ tại thời điểm mở bàn để không bị ảnh hưởng khi bảng giá thay đổi trong tương lai
     public decimal AppliedHourlyRate { get; set; }
@@ -26,6 +29,27 @@ public class TableSession
     public string? ComboName { get; set; }
     public decimal? ComboPrice { get; set; }
     public int? ComboDurationMinutes { get; set; }
+
+    // Lưu lịch sử các chặng chơi khi chuyển bàn lệch giá (Chuẩn JSON 3NF)
+    public string? TransferHistoryJson { get; set; }
+
+    public List<TableSessionSegment> GetSegments()
+    {
+        if (string.IsNullOrWhiteSpace(TransferHistoryJson)) return new List<TableSessionSegment>();
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<TableSessionSegment>>(TransferHistoryJson) ?? new List<TableSessionSegment>();
+        }
+        catch
+        {
+            return new List<TableSessionSegment>();
+        }
+    }
+
+    public void SetSegments(List<TableSessionSegment> segments)
+    {
+        TransferHistoryJson = System.Text.Json.JsonSerializer.Serialize(segments);
+    }
 
     // Navigation
     public virtual Table Table { get; set; } = null!;

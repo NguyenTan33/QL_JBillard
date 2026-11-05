@@ -36,6 +36,7 @@
             <SolidColorBrush x:Key="TextMutedBrush" Color="#64748B" />       <!-- Chữ mờ / placeholder: Slate 500 rõ ràng -->
 
             <!-- Màu Điểm Nhấn (Accent Colors) -->
+            <SolidColorBrush x:Key="PrimaryBrush" Color="#059669" />           <!-- Alias màu chính bida -->
             <SolidColorBrush x:Key="AccentEmeraldBrush" Color="#10B981" />     <!-- Xanh ngọc Emerald đặc trưng bida -->
             <SolidColorBrush x:Key="AccentEmeraldDarkBrush" Color="#059669" /> <!-- Xanh ngọc đậm khi hover -->
             <SolidColorBrush x:Key="AccentCrimsonBrush" Color="#EF4444" />     <!-- Đỏ Crimson -->
@@ -568,6 +569,13 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ToolTip">
+                            <ControlTemplate.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#FFFFFF" />
+                                    <Setter Property="FontSize" Value="12" />
+                                    <Setter Property="FontWeight" Value="Medium" />
+                                </Style>
+                            </ControlTemplate.Resources>
                             <Border Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
@@ -578,8 +586,6 @@
                                     <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.35" Color="Black" />
                                 </Border.Effect>
                                 <ContentPresenter TextElement.Foreground="#FFFFFF"
-                                                  TextElement.FontSize="12"
-                                                  TextElement.FontWeight="Medium"
                                                   HorizontalAlignment="Center"
                                                   VerticalAlignment="Center" />
                             </Border>

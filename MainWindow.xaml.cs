@@ -12,6 +12,7 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly IServiceProvider _serviceProvider;
+    private bool _isLoggingOut = false;
 
     public MainWindow(MainViewModel viewModel, IServiceProvider serviceProvider)
     {
@@ -21,6 +22,8 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
 
         RegisterDialogEvents();
+
+        Closing += MainWindow_Closing;
     }
 
     private void RegisterDialogEvents()
@@ -160,6 +163,7 @@ public partial class MainWindow : Window
         // 6. Đăng xuất
         _viewModel.RequestLogout += () =>
         {
+            _isLoggingOut = true;
             var loginWindow = _serviceProvider.GetRequiredService<Views.Windows.LoginWindow>();
             var loginVm = (LoginViewModel)loginWindow.DataContext;
             loginVm.OnLoginSuccess += () =>
@@ -173,5 +177,37 @@ public partial class MainWindow : Window
             loginWindow.Show();
             Close();
         };
+    }
+
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (_isLoggingOut)
+        {
+            // Đang chuyển hướng sang cửa sổ Đăng Nhập, cho phép đóng MainWindow
+            return;
+        }
+
+        if (!_viewModel.CheckCanExitOrLogout(out string title, out string message))
+        {
+            e.Cancel = true;
+            System.Windows.MessageBox.Show(
+                message,
+                title,
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Warning);
+            _viewModel.NavigateCommand.Execute("SHIFT");
+            return;
+        }
+
+        var confirm = System.Windows.MessageBox.Show(
+            "Bạn có chắc chắn muốn đóng và thoát ứng dụng Quản Lý Bida không?",
+            "Xác Nhận Thoát Ứng Dụng",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+
+        if (confirm != System.Windows.MessageBoxResult.Yes)
+        {
+            e.Cancel = true;
+        }
     }
 }

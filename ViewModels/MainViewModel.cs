@@ -226,9 +226,61 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
+    public bool CheckCanExitOrLogout(out string warningTitle, out string warningMessage)
+    {
+        warningTitle = string.Empty;
+        warningMessage = string.Empty;
+
+        var activeShift = _shiftService.CurrentActiveShift;
+        if (activeShift == null)
+        {
+            return true;
+        }
+
+        var currentUser = CurrentUser ?? _authService.CurrentUser;
+        if (currentUser == null)
+        {
+            return true;
+        }
+
+        // 1. Role Admin mở ca -> Phải đóng ca mới cho đăng xuất hoặc thoát app
+        if (currentUser.Role == UserRole.Admin && activeShift.UserId == currentUser.UserId)
+        {
+            warningTitle = "Quản Trị Viên Chưa Đóng Ca";
+            warningMessage = "⚠️ BẠN ĐANG MỞ CA TRỰC!\n\n" +
+                             "Quản trị viên đang có một ca làm việc đang mở trong hệ thống.\n" +
+                             "Hệ thống yêu cầu phải hoàn tất đóng ca trực trước khi thực hiện hành động này.\n\n" +
+                             "👉 Vui lòng vào mục 'Ca Trực & Tiền Két' để kiểm đếm két và đóng ca!";
+            return false;
+        }
+
+        // 2. Role Thu ngân có ca đang mở -> Phải hoàn tất kết ca mới cho out app hoặc đăng xuất
+        if (currentUser.Role == UserRole.Cashier)
+        {
+            warningTitle = "Chưa Hoàn Tất Kết Ca";
+            warningMessage = "⚠️ CHƯA HOÀN TẤT KẾT CA!\n\n" +
+                             "Thu ngân phải hoàn tất kết ca và kiểm đếm bàn giao tiền két trước khi đăng xuất hoặc thoát ứng dụng.\n\n" +
+                             "👉 Vui lòng vào mục 'Ca Trực & Tiền Két' để hoàn tất kết ca!";
+            return false;
+        }
+
+        return true;
+    }
+
     [RelayCommand]
     private void Logout()
     {
+        if (!CheckCanExitOrLogout(out string title, out string message))
+        {
+            System.Windows.MessageBox.Show(
+                message,
+                title,
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Warning);
+            Navigate("SHIFT");
+            return;
+        }
+
         _authService.Logout();
         RequestLogout?.Invoke();
     }

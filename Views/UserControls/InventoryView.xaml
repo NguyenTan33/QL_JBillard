@@ -43,12 +43,14 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!-- Thanh tìm kiếm & lọc danh mục -->
+                    <!-- Thanh tìm kiếm & lọc danh mục & Quản lý danh mục -->
                     <Grid Grid.Row="0" Margin="0,0,0,14">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="190" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <!-- Ô tìm kiếm có Placeholder -->
@@ -64,6 +66,13 @@
                         <!-- Dropdown danh mục -->
                         <ComboBox Grid.Column="2" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" 
                                   DisplayMemberPath="CategoryName" Height="36" />
+
+                        <!-- Nút Quản Lý Danh Mục (Chỉ Admin mới có quyền) -->
+                        <Button Grid.Column="4" Content="🗂️ Quản Lý Danh Mục" Style="{StaticResource SecondaryButton}" 
+                                Height="36" Padding="14,0" FontSize="12.5" FontWeight="Bold"
+                                Command="{Binding OpenCategoryManagerCommand}" 
+                                ToolTip="Thêm mới, đổi tên hoặc quản lý danh mục thực đơn &amp; đơn vị tính"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}" />
                     </Grid>
 
                     <!-- Bảng Danh Sách Sản Phẩm (Màu sáng) -->
@@ -124,7 +133,12 @@
                 </Border.Effect>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <TextBlock Text="THÔNG TIN SẢN PHẨM" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,14" />
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                            <TextBlock Text="➕ THÊM MỚI SẢN PHẨM" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" 
+                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}" />
+                            <TextBlock Text="✎ CHỈNH SỬA SẢN PHẨM" FontSize="15" FontWeight="Bold" Foreground="#2563EB" 
+                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisConverter}}" />
+                        </StackPanel>
 
                         <!-- Mã sản phẩm -->
                         <TextBlock Text="MÃ SẢN PHẨM (CODE)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
@@ -171,7 +185,7 @@
                                 <ColumnDefinition Width="6" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <ComboBox Grid.Column="0" ItemsSource="{Binding Categories}" SelectedItem="{Binding FormSelectedCategory}" DisplayMemberPath="CategoryName" Height="34" />
+                            <ComboBox Grid.Column="0" ItemsSource="{Binding FormCategories}" SelectedItem="{Binding FormSelectedCategory}" DisplayMemberPath="CategoryName" Height="34" />
                             <Button Grid.Column="2" Content="⚙️ Quản Lý" Style="{StaticResource SecondaryButton}" Height="34" Padding="10,0" FontSize="11" FontWeight="Bold"
                                     Command="{Binding OpenCategoryManagerCommand}" ToolTip="Thêm mới, đổi tên hoặc quản lý danh mục thực đơn" />
                         </Grid>
@@ -233,12 +247,24 @@
                         <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" 
                                    FontSize="12" FontWeight="SemiBold" Margin="0,0,0,10" TextWrapping="Wrap" />
 
-                        <!-- Nút Lưu -->
-                        <Button Content="LƯU SẢN PHẨM" Style="{StaticResource PrimaryButton}" Height="38" 
-                                Command="{Binding SaveProductCommand}" Margin="0,0,0,8" />
+                        <!-- Nút Thêm Mới khi không ở chế độ sửa -->
+                        <Button Content="➕ THÊM MỚI SẢN PHẨM" Style="{StaticResource PrimaryButton}" Height="38" 
+                                Command="{Binding SaveProductCommand}" Margin="0,0,0,8" FontWeight="Bold"
+                                Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}" />
+
+                        <!-- Nút Cập Nhật khi đang ở chế độ sửa -->
+                        <Button Content="💾 CẬP NHẬT SẢN PHẨM" Style="{StaticResource PrimaryButton}" Background="#2563EB" Height="38" 
+                                Command="{Binding SaveProductCommand}" Margin="0,0,0,8" FontWeight="Bold"
+                                Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisConverter}}" />
+
+                        <!-- Nút Làm Mới / Hủy -->
+                        <Button Content="✕ Hủy Chế Độ Sửa / Làm Mới" Style="{StaticResource SecondaryButton}" Height="34" 
+                                Command="{Binding PrepareNewProductCommand}"
+                                Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisConverter}}" />
 
                         <Button Content="Làm Mới Form" Style="{StaticResource SecondaryButton}" Height="34" 
-                                Command="{Binding PrepareNewProductCommand}" />
+                                Command="{Binding PrepareNewProductCommand}"
+                                Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}" />
                     </StackPanel>
                 </ScrollViewer>
             </Border>
@@ -267,10 +293,12 @@
                     <TextBox Text="{Binding ImportQuantity, UpdateSourceTrigger=PropertyChanged}" Height="38" FontSize="15" FontWeight="Bold" Margin="0,0,0,12" 
                              Foreground="#000000" CaretBrush="#000000" />
 
-                    <!-- Đơn giá vốn -->
-                    <TextBlock Text="GIÁ VỐN NHẬP (VNĐ/ĐVT)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
-                    <TextBox Text="{Binding ImportCostPrice, UpdateSourceTrigger=PropertyChanged}" Height="38" Margin="0,0,0,12" 
-                             Foreground="#000000" CaretBrush="#000000" FontWeight="SemiBold" />
+                    <!-- Đơn giá vốn (Chỉ Quản trị viên Admin mới nhìn thấy và nhập giá vốn) -->
+                    <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}">
+                        <TextBlock Text="GIÁ VỐN NHẬP (VNĐ/ĐVT)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding ImportCostPrice, UpdateSourceTrigger=PropertyChanged}" Height="38" Margin="0,0,0,12" 
+                                 Foreground="#000000" CaretBrush="#000000" FontWeight="SemiBold" />
+                    </StackPanel>
 
                     <!-- Ghi chú nhập -->
                     <TextBlock Text="GHI CHÚ / NHÀ CUNG CẤP" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4" />

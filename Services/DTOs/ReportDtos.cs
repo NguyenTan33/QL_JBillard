@@ -13,6 +13,26 @@ public class DailyChartPointDto
     
     // Thuộc tính hỗ trợ vẽ biểu đồ XAML Canvas / Polyline
     public double NormalizedHeight { get; set; }           // 0..100%
+
+    public string TotalRevenueFormatted => TotalRevenue > 0 ? $"{TotalRevenue:N0} đ" : "0 đ";
+
+    public string TotalRevenueCompact
+    {
+        get
+        {
+            if (TotalRevenue <= 0) return "0 đ";
+            if (TotalRevenue >= 1_000_000m)
+            {
+                decimal tr = TotalRevenue / 1_000_000m;
+                return tr >= 10m ? $"{tr:F1} tr" : $"{tr:F2} tr";
+            }
+            if (TotalRevenue >= 1_000m)
+            {
+                return $"{TotalRevenue / 1_000m:N0} k";
+            }
+            return $"{TotalRevenue:N0} đ";
+        }
+    }
 }
 
 public class RevenueOverviewDto
@@ -26,6 +46,9 @@ public class RevenueOverviewDto
     public decimal AverageBillValue => TotalInvoices > 0 ? TotalRevenue / TotalInvoices : 0;
     
     public bool IsHourlyView { get; set; }
+    public bool IsSplitMonthView { get; set; }
+    public bool IsStandardChartView => !IsHourlyView && !IsSplitMonthView;
+
     public List<DailyChartPointDto> ChartPoints { get; set; } = new();
 
     // Phân chia 2 ca cho quán bida 24/24h: Ca Sáng (06h - 17h) và Ca Tối/Đêm (18h - 05h sáng)
@@ -33,6 +56,14 @@ public class RevenueOverviewDto
     public List<DailyChartPointDto> NightShiftPoints { get; set; } = new();
     public decimal DayShiftRevenue => DayShiftPoints.Sum(p => p.TotalRevenue);
     public decimal NightShiftRevenue => NightShiftPoints.Sum(p => p.TotalRevenue);
+
+    // Phân chia 2 nửa tháng (15 ngày đầu & các ngày còn lại) khi xem theo tháng
+    public List<DailyChartPointDto> FirstHalfMonthPoints { get; set; } = new();
+    public List<DailyChartPointDto> SecondHalfMonthPoints { get; set; } = new();
+    public decimal FirstHalfMonthRevenue => FirstHalfMonthPoints.Sum(p => p.TotalRevenue);
+    public decimal SecondHalfMonthRevenue => SecondHalfMonthPoints.Sum(p => p.TotalRevenue);
+    public string FirstHalfTitle { get; set; } = "📅 NỬA ĐẦU THÁNG (Ngày 01 - 15)";
+    public string SecondHalfTitle { get; set; } = "📅 NỬA CUỐI THÁNG (Ngày 16 - Cuối tháng)";
 }
 
 public class TablePerformanceDto
@@ -94,12 +125,29 @@ public class ComparisonBarPointDto
     public decimal ValueCurrent { get; set; }
     public decimal ValuePrevious { get; set; }
     
-    // Chiều cao chuẩn hóa (0..150 px)
+    // Chiều cao chuẩn hóa (0..140 px)
     public double HeightCurrent { get; set; }
     public double HeightPrevious { get; set; }
 
-    public string ValueCurrentFormatted => ValueCurrent > 0 ? $"{ValueCurrent:N0} đ" : "0 đ";
-    public string ValuePreviousFormatted => ValuePrevious > 0 ? $"{ValuePrevious:N0} đ" : "0 đ";
+    public static string FormatCompact(decimal val)
+    {
+        if (val <= 0) return "0 đ";
+        if (val >= 1_000_000m)
+        {
+            decimal tr = val / 1_000_000m;
+            return tr >= 10m ? $"{tr:F1} tr" : $"{tr:F2} tr";
+        }
+        if (val >= 1_000m)
+        {
+            return $"{val / 1_000m:N0} k";
+        }
+        return $"{val:N0} đ";
+    }
+
+    public string ValueCurrentFormatted => FormatCompact(ValueCurrent);
+    public string ValuePreviousFormatted => FormatCompact(ValuePrevious);
+    public string ValueCurrentFullFormatted => ValueCurrent > 0 ? $"{ValueCurrent:N0} đ" : "0 đ";
+    public string ValuePreviousFullFormatted => ValuePrevious > 0 ? $"{ValuePrevious:N0} đ" : "0 đ";
 }
 
 public class PeriodComparisonDto

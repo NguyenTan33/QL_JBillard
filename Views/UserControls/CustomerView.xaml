@@ -59,18 +59,25 @@
                         <DataGridTextColumn Header="LẦN CHƠI GẦN NHẤT" Binding="{Binding LastVisitAt, StringFormat='{}{0:dd/MM/yyyy}'}" Width="130" />
 
                         <!-- Cột Thao Tác (Chỉ Admin mới có quyền Sửa hoặc Xóa/Khóa hội viên) -->
-                        <DataGridTemplateColumn Header="THAO TÁC" Width="130"
-                                                Visibility="{Binding DataContext.IsAdmin, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisConverter}}">
+                        <DataGridTemplateColumn Header="THAO TÁC" Width="130">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Padding="8,2" Height="26" Margin="0,0,4,0"
-                                                Command="{Binding DataContext.EditCustomerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}" />
-                                        <Button Content="Xóa" Style="{StaticResource DangerButton}" Padding="8,2" Height="26"
-                                                Command="{Binding DataContext.DeleteCustomerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}" />
-                                    </StackPanel>
+                                    <Grid>
+                                        <!-- Dành cho Admin: nút Sửa & Xóa -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                                    Visibility="{Binding DataContext.IsAdmin, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisConverter}}">
+                                            <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Padding="8,2" Height="26" Margin="0,0,4,0"
+                                                    Command="{Binding DataContext.EditCustomerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="Xóa" Style="{StaticResource DangerButton}" Padding="8,2" Height="26"
+                                                    Command="{Binding DataContext.DeleteCustomerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+
+                                        <!-- Dành cho Thu ngân: Khóa sửa/xóa, chỉ tra cứu & tích điểm -->
+                                        <TextBlock Text="—" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="#94A3B8"
+                                                   Visibility="{Binding DataContext.IsAdmin, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBoolToVisConverter}}" />
+                                    </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

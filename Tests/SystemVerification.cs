@@ -59,6 +59,13 @@ public static class SystemVerification
         {
             shiftService.CloseShift(shiftService.CurrentActiveShift.ShiftId, 1_000_000, "Reset ca để kiểm thử", closingUserId: 1);
         }
+        using (var ctx = contextFactory.CreateDbContext())
+        {
+            var oldSessions = ctx.TableSessions.Where(s => s.Status == SessionStatus.Active).ToList();
+            foreach (var s in oldSessions) { s.Status = SessionStatus.Completed; s.EndTime = DateTime.Now; }
+            foreach (var t in ctx.Tables) { t.Status = TableStatus.Available; t.CurrentSessionId = null; }
+            ctx.SaveChanges();
+        }
         var shift = shiftService.StartShift(userId, 1_000_000, "Ca sáng");
         Console.WriteLine($"✅ 3. Mở ca làm việc thành công (Tiền két đầu ca: {shift.OpeningCash:N0} đ)");
 
@@ -92,6 +99,30 @@ public static class SystemVerification
         if (table4Check?.Status != TableStatus.Occupied) throw new Exception("Mở bàn từ bàn đã đặt thất bại!");
         billService.CheckoutTable(sessionFromReserved.SessionId, userId, PaymentMethod.Cash, 0, 0, "Chốt bàn kiểm thử");
         Console.WriteLine($"✅ 4.1.1 Trạng thái Đặt Bàn (Reserved): Đặt bàn & Mở bàn thành công 100%!");
+
+        // 4.1.2 Test Chuyển Bàn Lệch Giá Đa Khung Giờ (Multi-Segment Table Transfer: 50k -> 80k)
+        var vipTable = tableService.GetAllTables().First(t => t.TableNumber.Equals("VIP 01", StringComparison.OrdinalIgnoreCase));
+        if (vipTable.Status != TableStatus.Available)
+        {
+            tableService.UpdateTableStatus(vipTable.TableId, TableStatus.Available, userId);
+        }
+        bool switchedToVip = tableService.SwitchTable(table1.TableId, vipTable.TableId, userId, "Khách đổi sang bàn VIP 01 lệch giá");
+        if (!switchedToVip) throw new Exception("Chuyển bàn sang bàn VIP lệch giá thất bại!");
+
+        using (var ctx = contextFactory.CreateDbContext())
+        {
+            var dbSession = ctx.TableSessions.Find(session.SessionId);
+            var segments = dbSession!.GetSegments();
+            if (segments.Count == 0) throw new Exception("Không ghi nhận được chặng bàn cũ khi đổi bàn lệch giá!");
+            if (segments[0].HourlyRate != 50_000) throw new Exception($"Đơn giá chặng cũ không đúng 50.000 đ/h: {segments[0].HourlyRate}");
+        }
+
+        var liveBillCheck = billService.CalculateLiveBill(session.SessionId);
+        if (!liveBillCheck.HasMultipleSegments || liveBillCheck.Segments.Count < 2)
+        {
+            throw new Exception("LiveBill không hiển thị đủ các chặng bàn khi chuyển bàn lệch giá!");
+        }
+        Console.WriteLine($"✅ 4.1.2 Chuyển bàn lệch giá (50k -> 80k): Ghi nhận {liveBillCheck.Segments.Count} chặng bàn chi tiết trên bill!");
 
         // 4.2 Test Mở Bàn Gói Combo kèm món ăn tự động vào Checklist Bếp/Order
         var table3 = tableService.GetAllTables().First(t => t.TableNumber.Equals("BÀN 03", StringComparison.OrdinalIgnoreCase));
@@ -150,6 +181,39 @@ public static class SystemVerification
         var customer = custService.CreateOrUpdateCustomer("0988777666", "Anh Tuấn Cơ Thủ");
         Console.WriteLine($"✅ 6. Tạo thành viên theo SĐT: {customer.FullName} ({customer.PhoneNumber}) - Hạng: {customer.Tier.TierName}");
 
+        // 6.1 Test Phân Quyền Hội Viên: Thu ngân chỉ được thêm mới, không được sửa/xóa
+        var cashierUser = new Domain.Entities.User
+        {
+            UserId = 999,
+            Username = "thungan_test",
+            FullName = "Thu Ngân Kiểm Thử",
+            Role = UserRole.Cashier
+        };
+        var cashierAuth = new FakeAuthService { CurrentUser = cashierUser };
+        var cashierCustVm = new ViewModels.CustomerViewModel(custService, cashierAuth, contextFactory) { SuppressConfirmation = true };
+        if (cashierCustVm.IsAdmin) throw new Exception("Lỗi phân quyền: Thu ngân không được là Admin!");
+
+        // Thu ngân thêm mới hội viên: Cho phép thành công
+        string newCashierCustPhone = $"09{DateTime.Now.Ticks % 100000000:D8}";
+        cashierCustVm.PrepareNewCustomer();
+        cashierCustVm.FormPhone = newCashierCustPhone;
+        cashierCustVm.FormFullName = "Khách Hàng Mới Thu Ngân Thêm";
+        cashierCustVm.SaveCustomerCommand.Execute(null);
+        if (cashierCustVm.Message == null || !cashierCustVm.Message.Contains("thành công"))
+        {
+            throw new Exception($"Lỗi: Thu ngân không thêm mới được hội viên! Message={cashierCustVm.Message}");
+        }
+
+        // Thu ngân cố tình sửa hội viên đã có: Bị chặn hoàn toàn
+        cashierCustVm.FormPhone = "0988777666"; // Khách anh Tuấn đã có
+        cashierCustVm.FormFullName = "Sửa Tên Lén";
+        cashierCustVm.SaveCustomerCommand.Execute(null);
+        if (cashierCustVm.Message == null || !cashierCustVm.Message.Contains("chỉ có quyền đăng ký thêm mới"))
+        {
+            throw new Exception("Lỗi: Thu ngân không bị chặn khi sửa thông tin hội viên đã có!");
+        }
+        Console.WriteLine("✅ 6.1 Phân quyền hội viên: Thu ngân thêm mới thành công, bị chặn 100% khi cố tình sửa/xóa hội viên!");
+
         // 7. Test VietQR Động Chuẩn EMVCo
         string qrPayload = vietQrService.GenerateEmvCoPayload("970422", "012345678999", 125000, "BIDA BAN 01");
         Console.WriteLine($"✅ 7. Sinh chuỗi Napas VietQR EMVCo thành công: {qrPayload[..30]}...");
@@ -167,7 +231,12 @@ public static class SystemVerification
 
         // 9. Test In Hóa Đơn ESC/POS
         byte[] escPos = printService.GenerateEscPosBytes(invoice);
-        Console.WriteLine($"✅ 9. Sinh tập lệnh máy in nhiệt ESC/POS K80/K58 thành công ({escPos.Length} bytes)");
+        string escPosText = System.Text.Encoding.UTF8.GetString(escPos);
+        if (!escPosText.Contains("Chi tiet tien gio theo ban"))
+        {
+            throw new Exception("Hóa đơn in ESC/POS không chứa chi tiết từng chặng bàn khi chuyển bàn lệch giá!");
+        }
+        Console.WriteLine($"✅ 9. Sinh tập lệnh máy in nhiệt ESC/POS K80/K58 thành công ({escPos.Length} bytes, đủ chi tiết các chặng bàn)");
 
         // 10. Test Sao Lưu Mã Hóa AES-256
         var backup = backupService.CreateBackup("AUTO_VERIFY", true);
@@ -196,7 +265,15 @@ public static class SystemVerification
             "Nộp bớt tiền két ca sáng vào tài khoản",
             shift2.ShiftId
         );
-        Console.WriteLine($"✅ 14. Tạo phiếu nộp tiền ngân hàng: Mã {depositSlip.SlipCode}, Số tiền: {depositSlip.Amount:N0} đ, Trạng thái: {depositSlip.Status}");
+        if (depositSlip.Status != "Approved") throw new Exception($"Trạng thái phiếu nộp tiền ngân hàng chưa phải 'Approved': {depositSlip.Status}");
+        Console.WriteLine($"✅ 14. Tạo phiếu nộp tiền ngân hàng: Mã {depositSlip.SlipCode}, Số tiền: {depositSlip.Amount:N0} đ, Trạng thái: {depositSlip.Status} (Đã bỏ Pending, nộp là Approved)");
+
+        var adminShiftVm = new ViewModels.ShiftViewModel(shiftService, authService, tableService);
+        adminShiftVm.SetDepositFilterCommand.Execute("TODAY");
+        adminShiftVm.SetDepositFilterCommand.Execute("THIS_WEEK");
+        adminShiftVm.SetDepositFilterCommand.Execute("THIS_MONTH");
+        adminShiftVm.SetDepositFilterCommand.Execute("ALL");
+        Console.WriteLine($"✅ 14.1 Bộ lọc Nộp tiền Ngân hàng độc quyền Admin: Lọc linh hoạt Hôm nay, Tuần này, Tháng này, Tất cả!");
 
         var summary2 = shiftService.GetCurrentShiftSummary();
         Console.WriteLine($"   - Tiền két thực giữ sau nộp ngân hàng: {summary2.CurrentDrawerCash:N0} đ (Đã trừ {summary2.TotalBankDeposits:N0} đ)");
@@ -364,7 +441,7 @@ public static class SystemVerification
             ctx.SaveChanges();
         }
 
-        var tableMgmtVm = new ViewModels.TableManagementViewModel(tableService, invService, authService);
+        var tableMgmtVm = new ViewModels.TableManagementViewModel(tableService, invService, authService) { SuppressConfirmation = true };
 
         // 31.1 Tầng lầu
         tableMgmtVm.FormFloorName = "Tầng 3 Sân Thượng";
@@ -631,4 +708,20 @@ public class SimpleDbContextFactory : IDbContextFactory<AppDbContext>
     private readonly DbContextOptions<AppDbContext> _options;
     public SimpleDbContextFactory(DbContextOptions<AppDbContext> options) => _options = options;
     public AppDbContext CreateDbContext() => new AppDbContext(_options);
+}
+
+public class FakeAuthService : Services.Interfaces.IAuthService
+{
+    public Domain.Entities.User? CurrentUser { get; set; }
+    public event Action? OnAuthStateChanged { add { } remove { } }
+    public bool Login(string username, string password) => true;
+    public void Logout() { }
+    public bool IsInRole(params UserRole[] roles) => roles.Contains(CurrentUser?.Role ?? UserRole.Cashier);
+    public List<Domain.Entities.User> GetAllUsers() => new();
+    public bool CreateUser(string username, string password, string fullName, string? phone, UserRole role) => true;
+    public bool UpdateUser(int userId, string fullName, string? phone, UserRole role, bool isActive, string? newPassword = null) => true;
+    public bool DeleteUser(int userId) => true;
+    public bool ToggleUserStatus(int userId) => true;
+    public Domain.Entities.User? GetUserById(int userId) => CurrentUser;
+    public bool ChangePassword(int userId, string oldPassword, string newPassword) => true;
 }

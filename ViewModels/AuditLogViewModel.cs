@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -8,6 +9,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
 using Microsoft.Win32;
+using MiniExcelLibs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QL_JBillard.Domain.Entities;
@@ -44,7 +46,16 @@ public partial class AuditLogViewModel : ObservableObject
     private bool _isTampered = false;
 
     [ObservableProperty]
-    private string _selectedDateFilter = "ALL"; // ALL, TODAY, YESTERDAY, 7DAYS
+    private string _selectedDateFilter = "TODAY"; // TODAY, YESTERDAY, 7DAYS, CUSTOM, ALL
+
+    [ObservableProperty]
+    private DateTime _fromDate = DateTime.Today;
+
+    [ObservableProperty]
+    private DateTime _toDate = DateTime.Today;
+
+    [ObservableProperty]
+    private string _logCountText = string.Empty;
 
     public AuditLogViewModel(IAuditService auditService, IBackupAndSecurityService securityService)
     {
@@ -52,6 +63,16 @@ public partial class AuditLogViewModel : ObservableObject
         _securityService = securityService;
         LoadLogs();
         VerifyDatabase();
+    }
+
+    partial void OnFromDateChanged(DateTime value)
+    {
+        if (SelectedDateFilter == "CUSTOM") LoadLogs();
+    }
+
+    partial void OnToDateChanged(DateTime value)
+    {
+        if (SelectedDateFilter == "CUSTOM") LoadLogs();
     }
 
     [RelayCommand]
@@ -64,23 +85,32 @@ public partial class AuditLogViewModel : ObservableObject
     [RelayCommand]
     public void LoadLogs()
     {
-        var rawList = _auditService.GetRecentLogs(500);
-
         DateTime today = DateTime.Today;
-        if (SelectedDateFilter == "TODAY")
+        List<AuditLog> rawList;
+
+        switch (SelectedDateFilter)
         {
-            rawList = rawList.Where(l => l.CreatedAt.Date == today).ToList();
+            case "TODAY":
+                rawList = _auditService.GetLogs(today, today);
+                break;
+            case "YESTERDAY":
+                DateTime yesterday = today.AddDays(-1);
+                rawList = _auditService.GetLogs(yesterday, yesterday);
+                break;
+            case "7DAYS":
+                DateTime pastWeek = today.AddDays(-7);
+                rawList = _auditService.GetLogs(pastWeek, today);
+                break;
+            case "CUSTOM":
+                rawList = _auditService.GetLogs(FromDate, ToDate);
+                break;
+            case "ALL":
+            default:
+                rawList = _auditService.GetLogs(null, null, null);
+                break;
         }
-        else if (SelectedDateFilter == "YESTERDAY")
-        {
-            DateTime yesterday = today.AddDays(-1);
-            rawList = rawList.Where(l => l.CreatedAt.Date == yesterday).ToList();
-        }
-        else if (SelectedDateFilter == "7DAYS")
-        {
-            DateTime pastWeek = today.AddDays(-7);
-            rawList = rawList.Where(l => l.CreatedAt.Date >= pastWeek).ToList();
-        }
+
+        LogCountText = $"Hiển thị: {rawList.Count} bản ghi";
 
         var viewModels = rawList.Select(log =>
         {
@@ -122,32 +152,60 @@ public partial class AuditLogViewModel : ObservableObject
                 return;
             }
 
+            string dateTag = SelectedDateFilter switch
+            {
+                "TODAY" => $"HomNay_{DateTime.Now:yyyyMMdd}",
+                "YESTERDAY" => $"HomQua_{DateTime.Today.AddDays(-1):yyyyMMdd}",
+                "7DAYS" => $"7NgayQua_{DateTime.Now:yyyyMMdd}",
+                "CUSTOM" => $"{FromDate:yyyyMMdd}_den_{ToDate:yyyyMMdd}",
+                _ => $"TatCa_{DateTime.Now:yyyyMMdd}"
+            };
+
             var sfd = new SaveFileDialog
             {
-                Title = "Xuất File Nhật Ký Hoạt Động Hệ Thống (CSV)",
-                Filter = "File Excel / CSV (*.csv)|*.csv|All Files (*.*)|*.*",
-                FileName = $"NhatKy_HeThong_JBillard_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+                Title = "Xuất File Nhật Ký Hoạt Động Hệ Thống",
+                Filter = "File Excel (*.xlsx)|*.xlsx|File CSV (*.csv)|*.csv",
+                FileName = $"NhatKy_HeThong_JBillard_{dateTag}_{DateTime.Now:HHmmss}.xlsx"
             };
 
             if (sfd.ShowDialog() == true)
             {
-                var sb = new StringBuilder();
-                sb.AppendLine("Mã Nhật Ký,Thời Gian,Người Thao Tác,Mã Hành Động,Tên Hành Động,Đối Tượng,Chi Tiết");
-
-                foreach (var log in Logs)
+                var exportList = Logs.Select(l => new Dictionary<string, object?>
                 {
-                    sb.AppendLine(string.Join(",",
-                        log.AuditLogId,
-                        EscapeCsv(log.CreatedAtFormatted),
-                        EscapeCsv(log.OperatorName),
-                        EscapeCsv(log.ActionCode),
-                        EscapeCsv(log.ActionDisplay),
-                        EscapeCsv(log.EntityNameDisplay),
-                        EscapeCsv(log.DetailsDisplay)
-                    ));
-                }
+                    ["Mã Nhật Ký"] = l.AuditLogId,
+                    ["Thời Gian"] = l.CreatedAtFormatted,
+                    ["Người Thao Tác"] = l.OperatorName,
+                    ["Mã Hành Động"] = l.ActionCode,
+                    ["Tên Hành Động"] = l.ActionDisplay,
+                    ["Đối Tượng"] = l.EntityNameDisplay,
+                    ["Chi Tiết"] = l.DetailsDisplay
+                }).ToList();
 
-                File.WriteAllText(sfd.FileName, sb.ToString(), new UTF8Encoding(true));
+                if (sfd.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                {
+                    MiniExcel.SaveAs(sfd.FileName, exportList, overwriteFile: true);
+                }
+                else
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine("sep=,");
+                    sb.AppendLine("Mã Nhật Ký,Thời Gian,Người Thao Tác,Mã Hành Động,Tên Hành Động,Đối Tượng,Chi Tiết");
+
+                    foreach (var log in Logs)
+                    {
+                        sb.AppendLine(string.Join(",",
+                            log.AuditLogId,
+                            EscapeCsv(log.CreatedAtFormatted),
+                            EscapeCsv(log.OperatorName),
+                            EscapeCsv(log.ActionCode),
+                            EscapeCsv(log.ActionDisplay),
+                            EscapeCsv(log.EntityNameDisplay),
+                            EscapeCsv(log.DetailsDisplay)
+                        ));
+                    }
+
+                    File.WriteAllText(sfd.FileName, sb.ToString(), new UTF8Encoding(true));
+                }
 
                 var res = MessageBox.Show(
                     $"Xuất file nhật ký hệ thống thành công!\nTổng cộng: {Logs.Count} bản ghi.\nFile lưu tại: {sfd.FileName}\n\nBạn có muốn mở file ngay bây giờ không?",
@@ -179,6 +237,7 @@ public partial class AuditLogViewModel : ObservableObject
         {
             "LOGIN_SUCCESS" => ("● Đăng Nhập", "#ECFDF5", "#059669"),
             "LOGIN_FAILED" => ("✕ Đăng Nhập Lỗi", "#FEF2F2", "#DC2626"),
+            "LOGIN_BLOCKED_SHIFT_ACTIVE" or "LOGIN_BLOCKED" => ("⛔ Chặn Đăng Nhập", "#FEF2F2", "#DC2626"),
             "LOGOUT" => ("○ Đăng Xuất", "#F1F5F9", "#475569"),
             "TABLE_OPEN" or "OPEN_TABLE" => ("▶ Mở Bàn", "#ECFDF5", "#059669"),
             "TABLE_SWITCH" or "SWITCH_TABLE" => ("⇄ Chuyển Bàn", "#EFF6FF", "#2563EB"),

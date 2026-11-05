@@ -31,16 +31,47 @@ public static class ProductImageGenerator
         ["HEINEKEN"] = ("🍺", Color.FromRgb(22, 101, 52), Color.FromRgb(20, 83, 45), "HEINEKEN SILVER"),
         ["TIGER_CRYSTAL"] = ("🍺", Color.FromRgb(30, 64, 175), Color.FromRgb(30, 58, 138), "TIGER CRYSTAL"),
 
-        // Đồ ăn nhanh
+        // Đồ ăn nhanh & Chế biến
         ["MI_BO_TRUNG"] = ("🍜", Color.FromRgb(217, 119, 6), Color.FromRgb(180, 83, 9), "MÌ BÒ TRỨNG ỐP"),
+        ["MITOM_BO"] = ("🍜", Color.FromRgb(217, 119, 6), Color.FromRgb(180, 83, 9), "MÌ TÔM BÒ TRỨNG"),
+        ["MITOM_TRUNG"] = ("🍜", Color.FromRgb(234, 88, 12), Color.FromRgb(194, 65, 12), "MÌ TÔM 2 TRỨNG"),
+        ["COM_CHIEN_BO"] = ("🍛", Color.FromRgb(217, 119, 6), Color.FromRgb(180, 83, 9), "CƠM CHIÊN BÒ TỎI"),
+        ["COM_CHIEN_TRUNG"] = ("🍳", Color.FromRgb(234, 179, 8), Color.FromRgb(202, 138, 4), "CƠM CHIÊN TRỨNG"),
+        ["XUC_XICH"] = ("🌭", Color.FromRgb(220, 38, 38), Color.FromRgb(185, 28, 28), "XÚC XÍCH ĐỨC NƯỚNG"),
+
+        // Đồ uống khác
+        ["PEPSI"] = ("🥤", Color.FromRgb(30, 58, 138), Color.FromRgb(23, 37, 84), "PEPSI KHÔNG CALO"),
+        ["REVIVE"] = ("💧", Color.FromRgb(6, 182, 212), Color.FromRgb(8, 145, 178), "KHOÁNG REVIVE"),
+        ["STING_VANG"] = ("⚡", Color.FromRgb(234, 179, 8), Color.FromRgb(202, 138, 4), "STING VÀNG SÂM"),
+        ["BAC_XIU"] = ("☕", Color.FromRgb(217, 119, 6), Color.FromRgb(180, 83, 9), "BẠC XỈU 3 TẦNG"),
+        ["TRA_CHANH"] = ("🍋", Color.FromRgb(132, 204, 22), Color.FromRgb(101, 163, 13), "TRÀ CHANH GIÃ TAY"),
+        ["TRA_MANG_CAU"] = ("🍈", Color.FromRgb(34, 197, 94), Color.FromRgb(21, 128, 61), "TRÀ MÃNG CẦU TƯƠI"),
+        ["BUDWEISER"] = ("🍺", Color.FromRgb(185, 28, 28), Color.FromRgb(153, 27, 27), "BUDWEISER KING"),
+        ["STRONGBOW"] = ("🍎", Color.FromRgb(236, 72, 153), Color.FromRgb(190, 24, 93), "STRONGBOW CIDER"),
+        ["CORONA"] = ("🍺", Color.FromRgb(202, 138, 4), Color.FromRgb(161, 98, 7), "CORONA EXTRA"),
+
+        // Mồi nhắm & Ăn vặt
         ["KHO_BO"] = ("🥩", Color.FromRgb(190, 24, 93), Color.FromRgb(136, 19, 55), "KHÔ BÒ VẮT CHANH"),
+        ["KHO_GA"] = ("🍗", Color.FromRgb(245, 158, 11), Color.FromRgb(217, 119, 6), "KHÔ GÀ CAY LÁ CHANH"),
+        ["MUC_XE"] = ("🦑", Color.FromRgb(234, 88, 12), Color.FromRgb(194, 65, 12), "MỰC XÉ NƯỚC DỪA"),
+        ["DAU_PHONG"] = ("🥜", Color.FromRgb(180, 83, 9), Color.FromRgb(146, 64, 14), "ĐẬU PHỘNG TỎI ỚT"),
+        ["SNACK_OISHI"] = ("🥨", Color.FromRgb(234, 179, 8), Color.FromRgb(217, 119, 6), "BIM BIM OISHI"),
+        ["KHOAI_TAY"] = ("🍟", Color.FromRgb(234, 179, 8), Color.FromRgb(202, 138, 4), "KHOAI TÂY CHIÊN"),
         ["HUONG_DUONG"] = ("🌻", Color.FromRgb(202, 138, 4), Color.FromRgb(161, 98, 7), "HƯỚNG DƯƠNG VỊ"),
         ["KHAN_LANH"] = ("❄️", Color.FromRgb(13, 148, 136), Color.FromRgb(15, 118, 110), "KHĂN LẠNH CAO CẤP"),
 
+        // Thuốc lá
+        ["THUOCLA_555"] = ("🚬", Color.FromRgb(30, 58, 138), Color.FromRgb(23, 37, 84), "THUỐC LÁ 555 NGOẠI"),
+        ["THUOCLA_MARL"] = ("🚬", Color.FromRgb(220, 38, 38), Color.FromRgb(185, 28, 28), "MARLBORO ĐỎ"),
+        ["THUOCLA_CRAVEN"] = ("🚬", Color.FromRgb(180, 83, 9), Color.FromRgb(120, 53, 15), "CRAVEN SỐ 5 MÈO"),
+        ["QUET_GAS"] = ("🔥", Color.FromRgb(234, 88, 12), Color.FromRgb(194, 65, 12), "BẬT LỬA GAS TAIYO"),
+
         // Phụ kiện bida
         ["GANG_TAY"] = ("🧤", Color.FromRgb(71, 85, 105), Color.FromRgb(51, 65, 85), "GĂNG TAY CUETEC"),
+        ["BAOTAY_BIDA"] = ("🧤", Color.FromRgb(71, 85, 105), Color.FromRgb(51, 65, 85), "BAO TAY BIDA NGÓN"),
         ["LO_XANH"] = ("🔷", Color.FromRgb(37, 99, 235), Color.FromRgb(29, 78, 216), "LƠ XANH MASTER"),
-        ["DAU_CO"] = ("🎱", Color.FromRgb(30, 41, 59), Color.FromRgb(15, 23, 42), "ĐẦU CƠ KAMUI BLACK")
+        ["DAU_CO"] = ("🎱", Color.FromRgb(30, 41, 59), Color.FromRgb(15, 23, 42), "ĐẦU CƠ KAMUI BLACK"),
+        ["GIAY_NHAM"] = ("📄", Color.FromRgb(100, 116, 139), Color.FromRgb(71, 85, 105), "GIẤY NHÁM BO CƠ")
     };
 
     public static string EnsureDefaultProductImages(AppDbContext context)

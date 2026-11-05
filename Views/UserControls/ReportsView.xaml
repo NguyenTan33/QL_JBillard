@@ -17,63 +17,152 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 1. HEADER: TIÊU ĐỀ & BỘ LỌC THỜI GIAN CHÍNH -->
-        <Border Grid.Row="0" Background="#FFFFFF" CornerRadius="12" Padding="16" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+        <!-- 1. HEADER: TIÊU ĐỀ & BỘ LỌC THỜI GIAN CHÍNH (THIẾT KẾ 2 HÀNG RỘNG RÃI, KHÔNG BAO GIỜ BỊ ĐÈ CHỮ) -->
+        <Border Grid.Row="0" Background="#FFFFFF" CornerRadius="12" Padding="16,14" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="8" Direction="270" Opacity="0.05" ShadowDepth="2" Color="Black" />
             </Border.Effect>
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="📊 BÁO CÁO &amp; THỐNG KÊ DOANH THU" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                    <TextBlock Text="Phân tích số liệu kinh doanh, hiệu suất bàn, top món F&amp;B và đối chiếu tăng trưởng" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
-                </StackPanel>
+                <!-- Hàng 1: Tiêu đề ở bên trái, các nút thao tác chính ở bên phải -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <!-- Bộ chọn khoảng thời gian nhanh (Segmented buttons) -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <RadioButton Content="Hôm Nay" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
-                                 IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=TODAY}"
-                                 Command="{Binding SetPresetCommand}" CommandParameter="TODAY"
-                                 Height="34" Padding="14,0" Margin="0,0,6,0" FontSize="12" />
-
-                    <RadioButton Content="Tuần Này" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
-                                 IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=THIS_WEEK}"
-                                 Command="{Binding SetPresetCommand}" CommandParameter="THIS_WEEK"
-                                 Height="34" Padding="14,0" Margin="0,0,6,0" FontSize="12" />
-
-                    <RadioButton Content="Tháng Này" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
-                                 IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=THIS_MONTH}"
-                                 Command="{Binding SetPresetCommand}" CommandParameter="THIS_MONTH"
-                                 Height="34" Padding="14,0" Margin="0,0,6,0" FontSize="12" />
-
-                    <RadioButton Content="Tùy Chọn Ngày" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
-                                 IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=CUSTOM}"
-                                 Command="{Binding SetPresetCommand}" CommandParameter="CUSTOM"
-                                 Height="34" Padding="14,0" FontSize="12" />
-
-                    <!-- DatePicker khi chọn CUSTOM -->
-                    <StackPanel Orientation="Horizontal" Margin="12,0,0,0"
-                                Visibility="{Binding SelectedPreset, Converter={StaticResource StringEqualsToVisConverter}, ConverterParameter=CUSTOM}">
-                        <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay}" Width="125" Height="34" VerticalContentAlignment="Center" />
-                        <TextBlock Text="➔" FontSize="12" VerticalAlignment="Center" Margin="6,0" Foreground="{StaticResource TextSecondaryBrush}" />
-                        <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Width="125" Height="34" VerticalContentAlignment="Center" />
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="📊 BÁO CÁO &amp; THỐNG KÊ DOANH THU" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock Text="Phân tích số liệu kinh doanh, hiệu suất bàn, top món F&amp;B và đối chiếu tăng trưởng" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
                     </StackPanel>
-                </StackPanel>
 
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="📥 Xuất Báo Cáo Data Analyst" Style="{StaticResource PrimaryButton}"
-                            Height="34" Padding="14,0" Margin="0,0,8,0" FontSize="12" FontWeight="Bold"
-                            Command="{Binding ExportDetailedRevenueDataCommand}" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="📥 Xuất Báo Cáo Doanh Thu (Excel)" Style="{StaticResource PrimaryButton}"
+                                Height="36" Padding="16,0" Margin="0,0,10,0" FontSize="12" FontWeight="Bold"
+                                Command="{Binding ExportDetailedRevenueDataCommand}" />
 
-                    <Button Content="🔄 Tải Lại Dữ Liệu" Style="{StaticResource SecondaryButton}"
-                            Height="34" Padding="14,0" FontSize="12" FontWeight="SemiBold"
-                            Command="{Binding RefreshCommand}" />
-                </StackPanel>
+                        <Button Content="🔄 Tải Lại Dữ Liệu" Style="{StaticResource SecondaryButton}"
+                                Height="36" Padding="14,0" FontSize="12" FontWeight="SemiBold"
+                                Command="{Binding RefreshCommand}" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Hàng 2: Bộ chọn khoảng thời gian đa năng (Ngày / Tháng / Quý / Tùy chọn) -->
+                <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="8" Padding="10,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Nhóm nút chọn nhanh kỳ báo cáo -->
+                        <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="6" Padding="4" BorderBrush="#CBD5E1" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="Hôm Nay" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
+                                             IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=TODAY}"
+                                             Command="{Binding SetPresetCommand}" CommandParameter="TODAY"
+                                             Height="32" Padding="12,0" Margin="0,0,4,0" FontSize="12" />
+
+                                <RadioButton Content="Tuần Này" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
+                                             IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=THIS_WEEK}"
+                                             Command="{Binding SetPresetCommand}" CommandParameter="THIS_WEEK"
+                                             Height="32" Padding="12,0" Margin="0,0,4,0" FontSize="12" />
+
+                                <RadioButton Content="Tháng Này" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
+                                             IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=THIS_MONTH}"
+                                             Command="{Binding SetPresetCommand}" CommandParameter="THIS_MONTH"
+                                             Height="32" Padding="12,0" Margin="0,0,4,0" FontSize="12" />
+
+                                <RadioButton Content="Quý Này" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
+                                             IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=THIS_QUARTER}"
+                                             Command="{Binding SetPresetCommand}" CommandParameter="THIS_QUARTER"
+                                             Height="32" Padding="12,0" Margin="0,0,4,0" FontSize="12" />
+
+                                <RadioButton Content="Theo Tháng" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
+                                             IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=BY_MONTH}"
+                                             Command="{Binding SetPresetCommand}" CommandParameter="BY_MONTH"
+                                             Height="32" Padding="12,0" Margin="0,0,4,0" FontSize="12" />
+
+                                <RadioButton Content="Theo Quý" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
+                                             IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=BY_QUARTER}"
+                                             Command="{Binding SetPresetCommand}" CommandParameter="BY_QUARTER"
+                                             Height="32" Padding="12,0" Margin="0,0,4,0" FontSize="12" />
+
+                                <RadioButton Content="Tùy Chọn Ngày" GroupName="PresetButtons" Style="{StaticResource SegmentedTabRadioStyle}"
+                                             IsChecked="{Binding SelectedPreset, Converter={StaticResource StringEqualsConverter}, ConverterParameter=CUSTOM}"
+                                             Command="{Binding SetPresetCommand}" CommandParameter="CUSTOM"
+                                             Height="32" Padding="12,0" FontSize="12" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Khung điều khiển chi tiết theo chế độ đã chọn -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Chế độ CUSTOM: Chọn ngày từ -> đến -->
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding SelectedPreset, Converter={StaticResource StringEqualsToVisConverter}, ConverterParameter=CUSTOM}">
+                                <TextBlock Text="Từ ngày:" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay}" Width="125" Height="32" VerticalContentAlignment="Center" />
+                                <TextBlock Text="➔ đến:" VerticalAlignment="Center" Margin="8,0" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Width="125" Height="32" VerticalContentAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Chế độ BY_MONTH: Chọn Tháng và Năm -->
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding SelectedPreset, Converter={StaticResource StringEqualsToVisConverter}, ConverterParameter=BY_MONTH}">
+                                <TextBlock Text="Chọn Tháng:" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <ComboBox ItemsSource="{Binding AvailableMonths}" SelectedItem="{Binding SelectedMonth, Mode=TwoWay}" Width="95" Height="32" VerticalContentAlignment="Center" Margin="0,0,10,0">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StringFormat='Tháng {0}'}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Text="Năm:" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <ComboBox ItemsSource="{Binding AvailableYears}" SelectedItem="{Binding SelectedYear, Mode=TwoWay}" Width="85" Height="32" VerticalContentAlignment="Center">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StringFormat='Năm {0}'}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <!-- Chế độ BY_QUARTER: Chọn Quý và Năm -->
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding SelectedPreset, Converter={StaticResource StringEqualsToVisConverter}, ConverterParameter=BY_QUARTER}">
+                                <TextBlock Text="Chọn Quý:" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <ComboBox ItemsSource="{Binding AvailableQuarters}" SelectedItem="{Binding SelectedQuarter, Mode=TwoWay}" Width="95" Height="32" VerticalContentAlignment="Center" Margin="0,0,10,0">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StringFormat='Quý {0}'}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Text="Năm:" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <ComboBox ItemsSource="{Binding AvailableYears}" SelectedItem="{Binding SelectedYear, Mode=TwoWay}" Width="85" Height="32" VerticalContentAlignment="Center">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StringFormat='Năm {0}'}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Badge tóm tắt khoảng thời gian thực tế đang áp dụng -->
+                        <Border Grid.Column="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10,6" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding FilterSummaryText}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
+                        </Border>
+                    </Grid>
+                </Border>
             </Grid>
         </Border>
 
@@ -302,9 +391,10 @@
                                                 <DataTemplate>
                                                     <StackPanel Margin="2,0" VerticalAlignment="Bottom">
                                                         <!-- Số tiền trên đầu cột -->
-                                                        <TextBlock Text="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}"
-                                                                   FontSize="9" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"
-                                                                   HorizontalAlignment="Center" Margin="0,0,0,3" />
+                                                        <TextBlock Text="{Binding TotalRevenueCompact}"
+                                                                   FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                   HorizontalAlignment="Center" Margin="0,0,0,3"
+                                                                   ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}" />
                                                         <!-- Cột Màu Xanh Ngọc (Ca Sáng) -->
                                                         <Border Height="{Binding NormalizedHeight}" Background="#10B981" CornerRadius="3,3,0,0"
                                                                 MinWidth="22" HorizontalAlignment="Center" ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}">
@@ -348,9 +438,10 @@
                                                 <DataTemplate>
                                                     <StackPanel Margin="2,0" VerticalAlignment="Bottom">
                                                         <!-- Số tiền trên đầu cột -->
-                                                        <TextBlock Text="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}"
-                                                                   FontSize="9" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"
-                                                                   HorizontalAlignment="Center" Margin="0,0,0,3" />
+                                                        <TextBlock Text="{Binding TotalRevenueCompact}"
+                                                                   FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"
+                                                                   HorizontalAlignment="Center" Margin="0,0,0,3"
+                                                                   ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}" />
                                                         <!-- Cột Màu Xanh Dương (Ca Tối/Đêm) -->
                                                         <Border Height="{Binding NormalizedHeight}" Background="#0284C7" CornerRadius="3,3,0,0"
                                                                 MinWidth="22" HorizontalAlignment="Center" ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}">
@@ -370,24 +461,122 @@
                                 </Border>
                             </StackPanel>
 
-                            <!-- 2. KHI XEM NHIỀU NGÀY (TUẦN NÀY, THÁNG NÀY, TÙY CHỌN): HIỂN THỊ CÁC NGÀY BÌNH THƯỜNG -->
+                            <!-- 2. KHI XEM THEO THÁNG (> 15 NGÀY): TÁCH LÀM NỬA ĐẦU THÁNG (15 NGÀY) & NỬA CUỐI THÁNG (CÁC NGÀY CÒN LẠI) KHÔNG BỊ TRÀN HAY THIẾU DỮ LIỆU -->
+                            <StackPanel Visibility="{Binding Overview.IsSplitMonthView, Converter={StaticResource BoolToVisConverter}}">
+                                <!-- KHUNG 1: NỬA ĐẦU THÁNG (15 NGÀY ĐẦU) -->
+                                <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,12">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,10">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Overview.FirstHalfTitle}" FontSize="12" FontWeight="Bold" Foreground="#15803D" VerticalAlignment="Center" />
+                                                <Border Background="#DCFCE7" CornerRadius="6" Padding="8,2" Margin="10,0,0,0">
+                                                    <TextBlock Text="{Binding Overview.FirstHalfMonthRevenue, Converter={StaticResource CurrencyConverter}, StringFormat='Doanh thu: {0}'}" 
+                                                               FontSize="11" FontWeight="Bold" Foreground="#166534" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="15 Ngày Đầu Kỳ" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <!-- 15 Cột Nửa Tháng Đầu: Trải đều 100% chiều ngang -->
+                                        <ItemsControl ItemsSource="{Binding Overview.FirstHalfMonthPoints}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <UniformGrid Columns="15" Height="130" VerticalAlignment="Bottom" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="1,0" VerticalAlignment="Bottom">
+                                                        <!-- Số tiền trên đầu cột -->
+                                                        <TextBlock Text="{Binding TotalRevenueCompact}"
+                                                                   FontSize="8.5" FontWeight="Bold" Foreground="#047857"
+                                                                   HorizontalAlignment="Center" Margin="0,0,0,3"
+                                                                   ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}" />
+                                                        <!-- Cột Màu Xanh Ngọc (Nửa Đầu) -->
+                                                        <Border Height="{Binding NormalizedHeight}" Background="#10B981" CornerRadius="3,3,0,0"
+                                                                MinWidth="18" MaxWidth="36" HorizontalAlignment="Center" ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}">
+                                                            <Border.Effect>
+                                                                <DropShadowEffect BlurRadius="3" Direction="270" Opacity="0.15" ShadowDepth="1" Color="#059669" />
+                                                            </Border.Effect>
+                                                        </Border>
+                                                        <Rectangle Height="1.5" Fill="#CBD5E1" Margin="0,2,0,3" />
+                                                        <!-- Mốc ngày -->
+                                                        <TextBlock Text="{Binding Label}" FontSize="10.5" FontWeight="Bold"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- KHUNG 2: NỬA CUỐI THÁNG (CÁC NGÀY CÒN LẠI CỦA THÁNG) -->
+                                <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,10">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Overview.SecondHalfTitle}" FontSize="12" FontWeight="Bold" Foreground="#1E293B" VerticalAlignment="Center" />
+                                                <Border Background="#E2E8F0" CornerRadius="6" Padding="8,2" Margin="10,0,0,0">
+                                                    <TextBlock Text="{Binding Overview.SecondHalfMonthRevenue, Converter={StaticResource CurrencyConverter}, StringFormat='Doanh thu: {0}'}" 
+                                                               FontSize="11" FontWeight="Bold" Foreground="#0F172A" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="Các Ngày Còn Lại Của Tháng" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <!-- Cột Nửa Tháng Sau: Trải đều 100% chiều ngang -->
+                                        <ItemsControl ItemsSource="{Binding Overview.SecondHalfMonthPoints}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <UniformGrid Columns="16" Height="130" VerticalAlignment="Bottom" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="1,0" VerticalAlignment="Bottom">
+                                                        <!-- Số tiền trên đầu cột -->
+                                                        <TextBlock Text="{Binding TotalRevenueCompact}"
+                                                                   FontSize="8.5" FontWeight="Bold" Foreground="#334155"
+                                                                   HorizontalAlignment="Center" Margin="0,0,0,3"
+                                                                   ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}" />
+                                                        <!-- Cột Màu Xanh Dương Slate (Nửa Sau) -->
+                                                        <Border Height="{Binding NormalizedHeight}" Background="#0284C7" CornerRadius="3,3,0,0"
+                                                                MinWidth="18" MaxWidth="36" HorizontalAlignment="Center" ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}">
+                                                            <Border.Effect>
+                                                                <DropShadowEffect BlurRadius="3" Direction="270" Opacity="0.15" ShadowDepth="1" Color="#0369A1" />
+                                                            </Border.Effect>
+                                                        </Border>
+                                                        <Rectangle Height="1.5" Fill="#CBD5E1" Margin="0,2,0,3" />
+                                                        <!-- Mốc ngày -->
+                                                        <TextBlock Text="{Binding Label}" FontSize="10.5" FontWeight="Bold"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- 3. KHI XEM NHIỀU NGÀY KHÁC (TUẦN NÀY <= 15 NGÀY, HOẶC THEO QUÝ/NĂM) -->
                             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
-                                          Visibility="{Binding Overview.IsHourlyView, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}">
+                                          Visibility="{Binding Overview.IsStandardChartView, Converter={StaticResource BoolToVisConverter}}">
                                 <ItemsControl ItemsSource="{Binding Overview.ChartPoints}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" />
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
 
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel Width="56" Margin="0,0,5,0" VerticalAlignment="Bottom">
-                                                <TextBlock Text="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}"
+                                            <StackPanel Width="68" Margin="4,0" VerticalAlignment="Bottom">
+                                                <TextBlock Text="{Binding TotalRevenueCompact}"
                                                            FontSize="9" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"
-                                                           HorizontalAlignment="Center" Margin="0,0,0,4" />
+                                                           HorizontalAlignment="Center" Margin="0,0,0,4"
+                                                           ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}" />
                                                 <Border Height="{Binding NormalizedHeight}" Background="#10B981" CornerRadius="4,4,0,0"
-                                                        MinWidth="28" HorizontalAlignment="Center" ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}">
+                                                        MinWidth="28" MaxWidth="42" HorizontalAlignment="Center" ToolTip="{Binding TotalRevenue, Converter={StaticResource CurrencyConverter}}">
                                                     <Border.Effect>
                                                         <DropShadowEffect BlurRadius="4" Direction="270" Opacity="0.15" ShadowDepth="1" Color="#059669" />
                                                     </Border.Effect>
@@ -814,7 +1003,7 @@
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="170" />
+                                    <RowDefinition Height="220" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
@@ -843,40 +1032,42 @@
 
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <StackPanel Width="110" Margin="6,0" VerticalAlignment="Bottom">
+                                                    <StackPanel Width="125" Margin="8,0" VerticalAlignment="Bottom">
                                                         <!-- Cặp 2 cột đứng cạnh nhau kèm số tiền trên đầu cột -->
-                                                        <Grid Height="165" VerticalAlignment="Bottom">
+                                                        <Grid Height="210" VerticalAlignment="Bottom">
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="*" />
                                                                 <ColumnDefinition Width="6" />
                                                                 <ColumnDefinition Width="*" />
                                                             </Grid.ColumnDefinitions>
 
-                                                            <!-- Cột 1: Kỳ Này (Màu xanh ngọc kèm số tiền phía trên) -->
-                                                            <StackPanel Grid.Column="0" VerticalAlignment="Bottom">
-                                                                <TextBlock Text="{Binding ValueCurrentFormatted}" FontSize="9.5" FontWeight="Bold" Foreground="#047857" HorizontalAlignment="Center" Margin="0,0,0,2" />
-                                                                <Border Height="{Binding HeightCurrent}" Width="30" Background="#10B981" CornerRadius="4,4,0,0" HorizontalAlignment="Center"
-                                                                        ToolTip="{Binding ValueCurrent, Converter={StaticResource CurrencyConverter}}" />
-                                                            </StackPanel>
+                                                             <!-- Cột 1: Kỳ Này (Màu xanh ngọc kèm số tiền phía trên) -->
+                                                             <StackPanel Grid.Column="0" VerticalAlignment="Bottom">
+                                                                 <TextBlock Text="{Binding ValueCurrentFormatted}" FontSize="9.5" FontWeight="Bold" Foreground="#047857" HorizontalAlignment="Center" Margin="0,0,0,3"
+                                                                            ToolTip="{Binding ValueCurrent, Converter={StaticResource CurrencyConverter}}" />
+                                                                 <Border Height="{Binding HeightCurrent}" Width="32" Background="#10B981" CornerRadius="4,4,0,0" HorizontalAlignment="Center"
+                                                                         ToolTip="{Binding ValueCurrent, Converter={StaticResource CurrencyConverter}}" />
+                                                             </StackPanel>
 
-                                                            <!-- Cột 2: Kỳ Trước (Màu xám Slate kèm số tiền phía trên) -->
-                                                            <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
-                                                                <TextBlock Text="{Binding ValuePreviousFormatted}" FontSize="9.5" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,0,0,2" />
-                                                                <Border Height="{Binding HeightPrevious}" Width="30" Background="#94A3B8" CornerRadius="4,4,0,0" HorizontalAlignment="Center"
-                                                                        ToolTip="{Binding ValuePrevious, Converter={StaticResource CurrencyConverter}}" />
-                                                            </StackPanel>
-                                                        </Grid>
+                                                             <!-- Cột 2: Kỳ Trước (Màu xám Slate kèm số tiền phía trên) -->
+                                                             <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
+                                                                 <TextBlock Text="{Binding ValuePreviousFormatted}" FontSize="9.5" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,0,0,3"
+                                                                            ToolTip="{Binding ValuePrevious, Converter={StaticResource CurrencyConverter}}" />
+                                                                 <Border Height="{Binding HeightPrevious}" Width="32" Background="#94A3B8" CornerRadius="4,4,0,0" HorizontalAlignment="Center"
+                                                                         ToolTip="{Binding ValuePrevious, Converter={StaticResource CurrencyConverter}}" />
+                                                             </StackPanel>
+                                                         </Grid>
 
-                                                        <Rectangle Height="1.5" Fill="#CBD5E1" Margin="0,2,0,4" />
+                                                         <Rectangle Height="1.5" Fill="#CBD5E1" Margin="0,2,0,4" />
 
-                                                        <!-- Nhãn mốc thời gian -->
-                                                        <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
-                                                    </StackPanel>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </ScrollViewer>
-                                </Border>
+                                                         <!-- Nhãn mốc thời gian -->
+                                                         <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                                     </StackPanel>
+                                                 </DataTemplate>
+                                             </ItemsControl.ItemTemplate>
+                                         </ItemsControl>
+                                     </ScrollViewer>
+                                 </Border>
 
                                 <!-- Tiêu đề Trục X -->
                                 <TextBlock Grid.Row="2" Grid.Column="1" Text="▶ Mốc thời gian đối chiếu (Thứ trong tuần / Ngày trong kỳ)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,6,0,0" />

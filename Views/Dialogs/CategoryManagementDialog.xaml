@@ -6,7 +6,7 @@
         mc:Ignorable="d"
         Title="Quản lý hệ thống bida - Quản Lý Nhóm Danh Mục &amp; Đơn Vị Tính" 
         Icon="pack://application:,,,/Resources/app_icon.png"
-        Width="820" Height="620"
+        Width="920" Height="660"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         Background="{StaticResource BgDarkBrush}">
@@ -28,7 +28,7 @@
 
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="🗂️ QUẢN LÝ NHÓM DANH MỤC THỰC ĐƠN &amp; ĐƠN VỊ TÍNH" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                    <TextBlock Text="Thêm mới, chỉnh sửa hoặc xóa nhóm mặt hàng (F&amp;B, Thuốc Lá, Phụ Kiện) và đơn vị tính" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                    <TextBlock Text="Tạo mới, chỉnh sửa tên hoặc xóa các nhóm danh mục (F&amp;B, Đồ Uống, Combo...) và đơn vị tính" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
                 </StackPanel>
 
                 <Button Grid.Column="1" Content="✕ Đóng" Style="{StaticResource SecondaryButton}" Height="32" Padding="12,0" Click="Close_Click" />
@@ -38,7 +38,7 @@
         <!-- 2. Thân cửa sổ: 2 Cột Danh Mục và Đơn Vị Tính -->
         <Grid Grid.Row="1" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.2*" />
+                <ColumnDefinition Width="1.25*" />
                 <ColumnDefinition Width="14" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
@@ -54,21 +54,36 @@
 
                     <TextBlock Grid.Row="0" Text="1. DANH SÁCH NHÓM DANH MỤC (F&amp;B / DỊCH VỤ)" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" Margin="0,0,0,8" />
 
-                    <!-- Form Thêm Danh Mục -->
+                    <!-- Form Thêm / Sửa Danh Mục -->
                     <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,10">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="6" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <TextBox Grid.Column="0" Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged}" 
-                                     Height="32" Padding="6,0" VerticalContentAlignment="Center" FontSize="12" 
-                                     ToolTip="Nhập tên nhóm danh mục mới (VD: Thuốc Lá, Trái Cây, Rượu Vang...)" />
+                            <TextBox Grid.Column="0" Text="{Binding CategoryInputName, UpdateSourceTrigger=PropertyChanged}" 
+                                     Height="32" Padding="8,0" VerticalContentAlignment="Center" FontSize="12" 
+                                     Foreground="#000000" CaretBrush="#000000" FontWeight="SemiBold"
+                                     ToolTip="Nhập tên nhóm danh mục (VD: Đồ Ăn Nhanh, Nước Giải Khát, Thuốc Lá, Combo...)" />
 
-                            <Button Grid.Column="2" Content="➕ Thêm Nhóm" Style="{StaticResource PrimaryButton}" Height="32" Padding="10,0" FontWeight="Bold"
-                                    Command="{Binding AddCategoryCommand}" />
+                            <!-- Nút Lưu / Thêm khi chưa sửa -->
+                            <Button Grid.Column="2" Content="➕ Thêm Nhóm" Style="{StaticResource PrimaryButton}" Height="32" Padding="12,0" FontWeight="Bold"
+                                    Command="{Binding SaveCategoryCommand}"
+                                    Visibility="{Binding IsEditingCategory, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}" />
+
+                            <!-- Nút Lưu Cập Nhật khi đang sửa -->
+                            <Button Grid.Column="2" Content="💾 Lưu Sửa" Style="{StaticResource PrimaryButton}" Height="32" Padding="12,0" FontWeight="Bold"
+                                    Command="{Binding SaveCategoryCommand}"
+                                    Visibility="{Binding IsEditingCategory, Converter={StaticResource BoolToVisConverter}}" />
+
+                            <!-- Nút Hủy Sửa -->
+                            <Button Grid.Column="4" Content="✕ Hủy" Style="{StaticResource SecondaryButton}" Height="32" Padding="10,0" FontWeight="SemiBold"
+                                    Command="{Binding CancelEditCategoryCommand}"
+                                    Visibility="{Binding IsEditingCategory, Converter={StaticResource BoolToVisConverter}}" />
                         </Grid>
                     </Border>
 
@@ -78,15 +93,20 @@
                               Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
                               BorderBrush="{StaticResource BorderDarkBrush}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="MÃ" Binding="{Binding CategoryId}" Width="45" FontWeight="Bold" />
+                            <DataGridTextColumn Header="MÃ" Binding="{Binding CategoryId}" Width="50" FontWeight="Bold" />
                             <DataGridTextColumn Header="TÊN NHÓM DANH MỤC" Binding="{Binding CategoryName}" Width="*" FontWeight="SemiBold" />
                             
-                            <DataGridTemplateColumn Header="THAO TÁC" Width="70">
+                            <DataGridTemplateColumn Header="THAO TÁC" Width="115">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="Xóa" Style="{StaticResource DangerButton}" Height="24" Padding="6,0" FontSize="11"
-                                                Command="{Binding DataContext.DeleteCategoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}" />
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Height="24" Width="48" Padding="0" FontSize="11" Margin="0,0,6,0"
+                                                    Command="{Binding DataContext.StartEditCategoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="Xóa" Style="{StaticResource DangerButton}" Height="24" Width="48" Padding="0" FontSize="11"
+                                                    Command="{Binding DataContext.DeleteCategoryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -106,21 +126,36 @@
 
                     <TextBlock Grid.Row="0" Text="2. QUẢN LÝ ĐƠN VỊ TÍNH (DVT)" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,0,8" />
 
-                    <!-- Form Thêm Đơn Vị Tính -->
+                    <!-- Form Thêm / Sửa Đơn Vị Tính -->
                     <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,10">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="6" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <TextBox Grid.Column="0" Text="{Binding NewUnitName, UpdateSourceTrigger=PropertyChanged}" 
-                                     Height="32" Padding="6,0" VerticalContentAlignment="Center" FontSize="12" 
-                                     ToolTip="Nhập tên đơn vị tính (VD: Bao, Điếu, Thùng, Khay, Phần, Đĩa...)" />
+                            <TextBox Grid.Column="0" Text="{Binding UnitInputName, UpdateSourceTrigger=PropertyChanged}" 
+                                     Height="32" Padding="8,0" VerticalContentAlignment="Center" FontSize="12" 
+                                     Foreground="#000000" CaretBrush="#000000" FontWeight="SemiBold"
+                                     ToolTip="Nhập tên đơn vị tính (VD: Lon, Chai, Dĩa, Tô, Ly, Gói, Phần...)" />
 
+                            <!-- Nút Thêm khi chưa sửa -->
                             <Button Grid.Column="2" Content="➕ Thêm ĐVT" Style="{StaticResource PrimaryButton}" Height="32" Padding="10,0" FontWeight="Bold"
-                                    Command="{Binding AddUnitCommand}" />
+                                    Command="{Binding SaveUnitCommand}"
+                                    Visibility="{Binding IsEditingUnit, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}" />
+
+                            <!-- Nút Lưu khi đang sửa -->
+                            <Button Grid.Column="2" Content="💾 Lưu Sửa" Style="{StaticResource PrimaryButton}" Height="32" Padding="10,0" FontWeight="Bold"
+                                    Command="{Binding SaveUnitCommand}"
+                                    Visibility="{Binding IsEditingUnit, Converter={StaticResource BoolToVisConverter}}" />
+
+                            <!-- Nút Hủy Sửa -->
+                            <Button Grid.Column="4" Content="✕ Hủy" Style="{StaticResource SecondaryButton}" Height="32" Padding="8,0" FontWeight="SemiBold"
+                                    Command="{Binding CancelEditUnitCommand}"
+                                    Visibility="{Binding IsEditingUnit, Converter={StaticResource BoolToVisConverter}}" />
                         </Grid>
                     </Border>
 
@@ -130,15 +165,20 @@
                               Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
                               BorderBrush="{StaticResource BorderDarkBrush}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="MÃ" Binding="{Binding UnitId}" Width="45" FontWeight="Bold" />
+                            <DataGridTextColumn Header="MÃ" Binding="{Binding UnitId}" Width="50" FontWeight="Bold" />
                             <DataGridTextColumn Header="ĐƠN VỊ TÍNH" Binding="{Binding UnitName}" Width="*" FontWeight="SemiBold" />
                             
-                            <DataGridTemplateColumn Header="THAO TÁC" Width="70">
+                            <DataGridTemplateColumn Header="THAO TÁC" Width="115">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="Xóa" Style="{StaticResource DangerButton}" Height="24" Padding="6,0" FontSize="11"
-                                                Command="{Binding DataContext.DeleteUnitCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}" />
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Content="Sửa" Style="{StaticResource SecondaryButton}" Height="24" Width="48" Padding="0" FontSize="11" Margin="0,0,6,0"
+                                                    Command="{Binding DataContext.StartEditUnitCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="Xóa" Style="{StaticResource DangerButton}" Height="24" Width="48" Padding="0" FontSize="11"
+                                                    Command="{Binding DataContext.DeleteUnitCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -149,10 +189,10 @@
         </Grid>
 
         <!-- 3. Footer Thông báo & Đóng -->
-        <Border Grid.Row="2" Background="#FFFFFF" CornerRadius="8" Padding="12,8" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+        <Border Grid.Row="2" Background="#FFFFFF" CornerRadius="8" Padding="14,10" BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
             <Grid>
-                <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentEmeraldDarkBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
-                <Button Content="Hoàn Tất &amp; Áp Dụng" Style="{StaticResource PrimaryButton}" Height="32" Padding="16,0" FontWeight="Bold" HorizontalAlignment="Right" Click="Close_Click" />
+                <TextBlock Text="{Binding Message}" Foreground="{StaticResource AccentAmberBrush}" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <Button Content="Hoàn Tất &amp; Đóng" Style="{StaticResource PrimaryButton}" Height="34" Padding="18,0" FontWeight="Bold" HorizontalAlignment="Right" Click="Close_Click" />
             </Grid>
         </Border>
     </Grid>

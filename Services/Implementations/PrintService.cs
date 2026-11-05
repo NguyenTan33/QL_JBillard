@@ -21,6 +21,27 @@ public class PrintService : IPrintService
         _contextFactory = contextFactory;
     }
 
+    private static string ToPrinterText(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        var normalizedString = text.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder();
+        foreach (var c in normalizedString)
+        {
+            var category = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (category != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(c);
+            }
+        }
+        return sb.ToString().Normalize(NormalizationForm.FormC).Replace("đ", "d").Replace("Đ", "D");
+    }
+
+    private static byte[] ToPrinterBytes(string text)
+    {
+        return Encoding.ASCII.GetBytes(ToPrinterText(text));
+    }
+
     public byte[] GenerateEscPosBytes(Invoice invoice, bool kickCashDrawer = true, bool cutPaper = true)
     {
         using var ms = new MemoryStream();
@@ -45,43 +66,57 @@ public class PrintService : IPrintService
         writer.Write(new byte[] { 0x1B, 0x61, 0x01 }); // Căn giữa
         writer.Write(new byte[] { 0x1B, 0x45, 0x01 }); // Bật In đậm
         writer.Write(new byte[] { 0x1D, 0x21, 0x11 }); // Double width & height
-        writer.Write(Encoding.ASCII.GetBytes($"{clubName}\n"));
+        writer.Write(ToPrinterBytes($"{clubName}\n"));
 
         writer.Write(new byte[] { 0x1D, 0x21, 0x00 }); // Normal size
         writer.Write(new byte[] { 0x1B, 0x45, 0x00 }); // Tắt in đậm
-        if (!string.IsNullOrEmpty(clubAddress)) writer.Write(Encoding.ASCII.GetBytes($"DC: {clubAddress}\n"));
-        if (!string.IsNullOrEmpty(clubPhone)) writer.Write(Encoding.ASCII.GetBytes($"Hotline: {clubPhone}\n"));
+        if (!string.IsNullOrEmpty(clubAddress)) writer.Write(ToPrinterBytes($"DC: {clubAddress}\n"));
+        if (!string.IsNullOrEmpty(clubPhone)) writer.Write(ToPrinterBytes($"Hotline: {clubPhone}\n"));
 
-        writer.Write(Encoding.ASCII.GetBytes("------------------------------------------\n"));
+        writer.Write(ToPrinterBytes("------------------------------------------\n"));
         writer.Write(new byte[] { 0x1B, 0x45, 0x01 });
-        writer.Write(Encoding.ASCII.GetBytes("HOA DON THANH TOAN\n"));
+        writer.Write(ToPrinterBytes("HOA DON THANH TOAN\n"));
         writer.Write(new byte[] { 0x1B, 0x45, 0x00 });
-        writer.Write(Encoding.ASCII.GetBytes($"So HD: {invoice.InvoiceCode}\n"));
-        writer.Write(Encoding.ASCII.GetBytes($"Ngay: {invoice.CreatedAt:dd/MM/yyyy HH:mm:ss}\n"));
-        writer.Write(Encoding.ASCII.GetBytes($"Ban: {invoice.Session?.Table?.TableNumber ?? ""} | Thu ngan: {invoice.CashierUser?.FullName ?? ""}\n"));
+        writer.Write(ToPrinterBytes($"So HD: {invoice.InvoiceCode}\n"));
+        writer.Write(ToPrinterBytes($"Ngay: {invoice.CreatedAt:dd/MM/yyyy HH:mm:ss}\n"));
+        writer.Write(ToPrinterBytes($"Ban: {invoice.Session?.Table?.TableNumber ?? ""} | Thu ngan: {invoice.CashierUser?.FullName ?? ""}\n"));
 
         // Thông tin giờ chơi
         if (invoice.Session != null)
         {
             if (!string.IsNullOrEmpty(invoice.AppliedComboName ?? invoice.Session.ComboName))
             {
-                writer.Write(Encoding.ASCII.GetBytes($"Goi Combo: {invoice.AppliedComboName ?? invoice.Session.ComboName}\n"));
+                writer.Write(ToPrinterBytes($"Goi Combo: {invoice.AppliedComboName ?? invoice.Session.ComboName}\n"));
             }
-            writer.Write(Encoding.ASCII.GetBytes($"Gio vao: {invoice.Session.StartTime:HH:mm} - Gio ra: {invoice.Session.EndTime:HH:mm}\n"));
-            writer.Write(Encoding.ASCII.GetBytes($"Thoi gian choi: {invoice.TotalPlayMinutes} phut | Tien gio: {invoice.TimeAmount:N0}d\n"));
+
+            var segments = invoice.Session.GetSegments();
+            if (segments.Count > 1)
+            {
+                writer.Write(ToPrinterBytes("Chi tiet tien gio theo ban:\n"));
+                foreach (var seg in segments)
+                {
+                    string segLine = $"- {ToPrinterText(seg.TableNumber)} ({seg.HourlyRate / 1000:N0}k/h): {seg.PlayMinutes}p = {seg.Cost:N0}d\n";
+                    writer.Write(ToPrinterBytes(segLine));
+                }
+            }
+            else
+            {
+                writer.Write(ToPrinterBytes($"Gio vao: {invoice.Session.StartTime:HH:mm} - Gio ra: {invoice.Session.EndTime:HH:mm}\n"));
+            }
+            writer.Write(ToPrinterBytes($"Thoi gian choi: {invoice.TotalPlayMinutes} phut | Tien gio: {invoice.TimeAmount:N0}d\n"));
         }
 
-        writer.Write(Encoding.ASCII.GetBytes("------------------------------------------\n"));
+        writer.Write(ToPrinterBytes("------------------------------------------\n"));
 
         // 4. Danh sách món F&B
         writer.Write(new byte[] { 0x1B, 0x61, 0x00 }); // Căn trái
-        writer.Write(Encoding.ASCII.GetBytes("Ten Mon            SL   Don Gia    T.Tien\n"));
+        writer.Write(ToPrinterBytes("Ten Mon            SL   Don Gia    T.Tien\n"));
 
         if (invoice.Session?.OrderItems != null)
         {
             foreach (var item in invoice.Session.OrderItems.Where(x => !x.IsCancelled))
             {
-                string name = item.Product.ProductName;
+                string name = ToPrinterText(item.Product.ProductName);
                 if (name.Length > 17) name = name.Substring(0, 17);
                 name = name.PadRight(18);
                 string qty = item.Quantity.ToString().PadLeft(3);
@@ -92,37 +127,37 @@ public class PrintService : IPrintService
             }
         }
 
-        writer.Write(Encoding.ASCII.GetBytes("------------------------------------------\n"));
+        writer.Write(ToPrinterBytes("------------------------------------------\n"));
 
         // 5. Tổng kết thanh toán
         writer.Write(new byte[] { 0x1B, 0x61, 0x02 }); // Căn phải
-        writer.Write(Encoding.ASCII.GetBytes($"Tien gio: {invoice.TimeAmount:N0} d\n"));
-        writer.Write(Encoding.ASCII.GetBytes($"Tien dich vu: {invoice.ServiceAmount:N0} d\n"));
+        writer.Write(ToPrinterBytes($"Tien gio: {invoice.TimeAmount:N0} d\n"));
+        writer.Write(ToPrinterBytes($"Tien dich vu: {invoice.ServiceAmount:N0} d\n"));
 
         if (invoice.DiscountAmount > 0)
         {
-            writer.Write(Encoding.ASCII.GetBytes($"Giam gia ({invoice.DiscountPercent}%): -{invoice.DiscountAmount:N0} d\n"));
+            writer.Write(ToPrinterBytes($"Giam gia ({invoice.DiscountPercent}%): -{invoice.DiscountAmount:N0} d\n"));
         }
 
         if (invoice.PointsDiscountAmount > 0)
         {
-            writer.Write(Encoding.ASCII.GetBytes($"Tru diem ({invoice.PointsUsed} diem): -{invoice.PointsDiscountAmount:N0} d\n"));
+            writer.Write(ToPrinterBytes($"Tru diem ({invoice.PointsUsed} diem): -{invoice.PointsDiscountAmount:N0} d\n"));
         }
 
         writer.Write(new byte[] { 0x1B, 0x45, 0x01 });
         writer.Write(new byte[] { 0x1D, 0x21, 0x01 }); // Double height
-        writer.Write(Encoding.ASCII.GetBytes($"TONG CONG: {invoice.FinalAmount:N0} d\n"));
+        writer.Write(ToPrinterBytes($"TONG CONG: {invoice.FinalAmount:N0} d\n"));
         writer.Write(new byte[] { 0x1D, 0x21, 0x00 });
         writer.Write(new byte[] { 0x1B, 0x45, 0x00 });
 
         if (invoice.PointsEarned > 0)
         {
-            writer.Write(Encoding.ASCII.GetBytes($"Diem tich luy duoc: +{invoice.PointsEarned} diem\n"));
+            writer.Write(ToPrinterBytes($"Diem tich luy duoc: +{invoice.PointsEarned} diem\n"));
         }
 
         // 6. Footer
         writer.Write(new byte[] { 0x1B, 0x61, 0x01 }); // Căn giữa
-        writer.Write(Encoding.ASCII.GetBytes("\nCam on quy khach - Hen gap lai!\n\n\n\n"));
+        writer.Write(ToPrinterBytes("\nCam on quy khach - Hen gap lai!\n\n\n\n"));
 
         // 7. Cắt giấy (GS V 66 0)
         if (cutPaper)
@@ -185,9 +220,24 @@ public class PrintService : IPrintService
                 pInfo.Inlines.Add(new Bold(new Run($"Gói Combo: {invoice.AppliedComboName ?? invoice.Session.ComboName}")));
                 pInfo.Inlines.Add(new LineBreak());
             }
-            pInfo.Inlines.Add(new Run($"Giờ chơi: {invoice.Session.StartTime:HH:mm} - {invoice.Session.EndTime:HH:mm} ({invoice.TotalPlayMinutes} phút)"));
-            pInfo.Inlines.Add(new LineBreak());
-            pInfo.Inlines.Add(new Run($"Tiền giờ: {invoice.TimeAmount:N0} đ"));
+
+            var segments = invoice.Session.GetSegments();
+            if (segments.Count > 1)
+            {
+                pInfo.Inlines.Add(new Bold(new Run("Chi tiết tiền giờ theo bàn:")));
+                pInfo.Inlines.Add(new LineBreak());
+                foreach (var seg in segments)
+                {
+                    pInfo.Inlines.Add(new Run($"• {seg.TableNumber} ({seg.HourlyRate:N0} đ/h): {seg.DurationFormatted} = {seg.Cost:N0} đ"));
+                    pInfo.Inlines.Add(new LineBreak());
+                }
+            }
+            else
+            {
+                pInfo.Inlines.Add(new Run($"Giờ chơi: {invoice.Session.StartTime:HH:mm} - {invoice.Session.EndTime:HH:mm} ({invoice.TotalPlayMinutes} phút)"));
+                pInfo.Inlines.Add(new LineBreak());
+            }
+            pInfo.Inlines.Add(new Bold(new Run($"Tổng tiền giờ: {invoice.TimeAmount:N0} đ")));
         }
         doc.Blocks.Add(pInfo);
 

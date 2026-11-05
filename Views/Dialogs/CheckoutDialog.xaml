@@ -100,6 +100,36 @@
                             <TextBlock Text="{Binding LiveBill.TimeCost, Converter={StaticResource CurrencyConverter}}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
                         </Grid>
 
+                        <!-- Danh Sách Các Chặng Chơi Khi Chuyển Bàn Lệch Giá -->
+                        <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1.5" CornerRadius="8" Padding="10" Margin="0,6,0,6"
+                                Visibility="{Binding LiveBill.HasMultipleSegments, Converter={StaticResource BoolToVisConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="🔄 CHI TIẾT TỪNG CHẶNG BÀN (LỆCH GIÁ):" FontSize="11" FontWeight="Bold" Foreground="#334155" Margin="0,0,0,6" />
+                                <ItemsControl ItemsSource="{Binding LiveBill.Segments}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="0,4" Margin="0,2">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding TableNumber}" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" />
+                                                            <TextBlock Text="{Binding HourlyRate, Converter={StaticResource CurrencyConverter}, StringFormat=' ({0}/h)'}" FontSize="11" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding DurationFormatted, StringFormat='Chơi: {0}'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Cost, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
                         <Separator Background="{StaticResource BorderDarkBrush}" Margin="0,6" />
                         <TextBlock Text="DỊCH VỤ / F&amp;B ĐÃ SỬ DỤNG" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentBlueBrush}" Margin="0,2,0,4" />
                     </StackPanel>

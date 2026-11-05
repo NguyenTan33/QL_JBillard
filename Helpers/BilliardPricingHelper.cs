@@ -51,6 +51,19 @@ public static class BilliardPricingHelper
         int totalMinutes = (int)Math.Max(1, (endTime - startTime).TotalMinutes);
         decimal totalRawCost = 0m;
 
+        // ƯU TIÊN KHUNG GIỜ GIÁ (Time-Slot Priority):
+        // Khung giờ cụ thể (phạm vi ngắn hơn, ví dụ Cao điểm tối 18h-22h: 4 tiếng) 
+        // phải luôn được ưu tiên áp dụng trước khung giờ rộng bao quát (ví dụ Cả ngày 0h-24h: 24 tiếng).
+        var prioritizedSlots = activeSlots
+            .OrderBy(s =>
+            {
+                int start = s.StartHour * 60 + s.StartMinute;
+                int end = (s.EndHour >= 24 ? 24 : s.EndHour) * 60 + s.EndMinute;
+                return end > start ? (end - start) : (1440 - start + end);
+            })
+            .ThenByDescending(s => s.HourlyRate)
+            .ToList();
+
         for (int i = 0; i < totalMinutes; i++)
         {
             DateTime currentMinute = startTime.AddMinutes(i);
@@ -58,7 +71,7 @@ public static class BilliardPricingHelper
 
             decimal minuteRate = defaultHourlyRate / 60m;
 
-            foreach (var slot in activeSlots)
+            foreach (var slot in prioritizedSlots)
             {
                 int slotStart = slot.StartHour * 60 + slot.StartMinute;
                 int slotEnd = (slot.EndHour >= 24 ? 24 : slot.EndHour) * 60 + slot.EndMinute;

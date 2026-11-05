@@ -88,10 +88,25 @@ public class ReportService : IReportService
                     TotalRevenue = dayInvs.Sum(i => i.FinalAmount)
                 });
             }
+
+            // Nếu khoảng ngày từ 16 đến 31 ngày (ví dụ theo tháng): chia làm 2 nửa tháng (15 ngày đầu & các ngày còn lại)
+            if (days > 15)
+            {
+                dto.IsSplitMonthView = true;
+                dto.FirstHalfMonthPoints = points.Take(15).ToList();
+                dto.SecondHalfMonthPoints = points.Skip(15).ToList();
+                dto.FirstHalfTitle = $"📅 NỬA THÁNG ĐẦU ({points[0].Label} - {points[14].Label})";
+                dto.SecondHalfTitle = $"📅 NỬA THÁNG SAU ({points[15].Label} - {points.Last().Label})";
+            }
+            else
+            {
+                dto.IsSplitMonthView = false;
+            }
         }
         else
         {
             dto.IsHourlyView = false;
+            dto.IsSplitMonthView = false;
             // Khoảng dài: gom theo từng tuần hoặc tháng
             var grouped = invoices.GroupBy(i => new { i.CreatedAt.Year, i.CreatedAt.Month })
                                   .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month);
@@ -175,7 +190,7 @@ public class ReportService : IReportService
             if (t.TotalRevenue <= 0 && t.TotalSessions <= 0)
             {
                 t.Rating = "THẤP";
-                t.RatingBadgeText = "⚪ Thấp (0%)";
+                t.RatingBadgeText = "○ 0%";
                 t.RatingBadgeBg = "#F1F5F9";
                 t.RatingBadgeBorder = "#E2E8F0";
                 t.RatingBadgeFg = "#64748B";
@@ -184,7 +199,7 @@ public class ReportService : IReportService
             else if (t.RelativePercentage >= 70)
             {
                 t.Rating = "HOT";
-                t.RatingBadgeText = $"🔥 HOT ({t.RelativePercentage:N0}%)";
+                t.RatingBadgeText = $"★ HOT ({t.RelativePercentage:N0}%)";
                 t.RatingBadgeBg = "#FEF2F2";
                 t.RatingBadgeBorder = "#FECACA";
                 t.RatingBadgeFg = "#DC2626";
@@ -193,7 +208,7 @@ public class ReportService : IReportService
             else if (t.RelativePercentage >= 40)
             {
                 t.Rating = "CAO";
-                t.RatingBadgeText = $"🟢 Cao ({t.RelativePercentage:N0}%)";
+                t.RatingBadgeText = $"▲ Cao ({t.RelativePercentage:N0}%)";
                 t.RatingBadgeBg = "#ECFDF5";
                 t.RatingBadgeBorder = "#A7F3D0";
                 t.RatingBadgeFg = "#059669";
@@ -202,7 +217,7 @@ public class ReportService : IReportService
             else if (t.RelativePercentage >= 15)
             {
                 t.Rating = "TRUNG BÌNH";
-                t.RatingBadgeText = $"🟡 T.Bình ({t.RelativePercentage:N0}%)";
+                t.RatingBadgeText = $"● T.Bình ({t.RelativePercentage:N0}%)";
                 t.RatingBadgeBg = "#FFFBEB";
                 t.RatingBadgeBorder = "#FDE68A";
                 t.RatingBadgeFg = "#D97706";
@@ -211,7 +226,7 @@ public class ReportService : IReportService
             else
             {
                 t.Rating = "THẤP";
-                t.RatingBadgeText = $"⚪ Thấp ({t.RelativePercentage:N0}%)";
+                t.RatingBadgeText = $"▼ Thấp ({t.RelativePercentage:N0}%)";
                 t.RatingBadgeBg = "#F1F5F9";
                 t.RatingBadgeBorder = "#CBD5E1";
                 t.RatingBadgeFg = "#64748B";
@@ -276,7 +291,7 @@ public class ReportService : IReportService
             if (p.QuantitySold <= 0)
             {
                 p.Rating = "THẤP";
-                p.RatingBadgeText = "⚪ Thấp (0%)";
+                p.RatingBadgeText = "○ 0%";
                 p.RatingBadgeBg = "#F1F5F9";
                 p.RatingBadgeBorder = "#E2E8F0";
                 p.RatingBadgeFg = "#64748B";
@@ -285,7 +300,7 @@ public class ReportService : IReportService
             else if (p.RelativePercentage >= 70)
             {
                 p.Rating = "HOT";
-                p.RatingBadgeText = $"🔥 HOT ({p.RelativePercentage:N0}%)";
+                p.RatingBadgeText = $"★ HOT ({p.RelativePercentage:N0}%)";
                 p.RatingBadgeBg = "#FEF2F2";
                 p.RatingBadgeBorder = "#FECACA";
                 p.RatingBadgeFg = "#DC2626";
@@ -294,7 +309,7 @@ public class ReportService : IReportService
             else if (p.RelativePercentage >= 40)
             {
                 p.Rating = "CAO";
-                p.RatingBadgeText = $"🟢 Cao ({p.RelativePercentage:N0}%)";
+                p.RatingBadgeText = $"▲ Cao ({p.RelativePercentage:N0}%)";
                 p.RatingBadgeBg = "#ECFDF5";
                 p.RatingBadgeBorder = "#A7F3D0";
                 p.RatingBadgeFg = "#059669";
@@ -303,7 +318,7 @@ public class ReportService : IReportService
             else if (p.RelativePercentage >= 15)
             {
                 p.Rating = "TRUNG BÌNH";
-                p.RatingBadgeText = $"🟡 T.Bình ({p.RelativePercentage:N0}%)";
+                p.RatingBadgeText = $"● T.Bình ({p.RelativePercentage:N0}%)";
                 p.RatingBadgeBg = "#FFFBEB";
                 p.RatingBadgeBorder = "#FDE68A";
                 p.RatingBadgeFg = "#D97706";
@@ -312,7 +327,7 @@ public class ReportService : IReportService
             else
             {
                 p.Rating = "THẤP";
-                p.RatingBadgeText = $"⚪ Thấp ({p.RelativePercentage:N0}%)";
+                p.RatingBadgeText = $"▼ Thấp ({p.RelativePercentage:N0}%)";
                 p.RatingBadgeBg = "#F1F5F9";
                 p.RatingBadgeBorder = "#CBD5E1";
                 p.RatingBadgeFg = "#64748B";

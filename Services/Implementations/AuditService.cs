@@ -9,6 +9,7 @@ namespace QL_JBillard.Services.Implementations;
 
 public class AuditService : IAuditService
 {
+    private static readonly object _auditLock = new();
     private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
     public AuditService(IDbContextFactory<AppDbContext> contextFactory)
@@ -18,69 +19,96 @@ public class AuditService : IAuditService
 
     public void Log(int? userId, string action, string entityName, string? entityId, object? oldValues = null, object? newValues = null)
     {
-        try
+        lock (_auditLock)
         {
-            using var context = _contextFactory.CreateDbContext();
-
-            // Lấy hash của bản ghi gần nhất để tạo chuỗi liên kết (Chained Hashing)
-            var lastLog = context.AuditLogs.OrderByDescending(x => x.AuditLogId).FirstOrDefault();
-            string prevHash = lastLog?.RecordHash ?? "GENESIS_BLOCK_JBILLIARD_SECURE";
-
-            var now = DateTime.Now;
-            string timeStr = now.ToString("yyyy-MM-dd HH:mm:ss");
-            var jsonOpts = new JsonSerializerOptions
+            try
             {
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            };
-            string oldJson = oldValues switch
-            {
-                null => string.Empty,
-                string s => s,
-                _ => JsonSerializer.Serialize(oldValues, jsonOpts)
-            };
-            string newJson = newValues switch
-            {
-                null => string.Empty,
-                string s => s,
-                _ => JsonSerializer.Serialize(newValues, jsonOpts)
-            };
+                using var context = _contextFactory.CreateDbContext();
 
-            // Tính mã băm bảo mật SHA-256 kết hợp dữ liệu và hash trước
-            string payload = $"{userId}_{action}_{entityName}_{entityId}_{prevHash}_{timeStr}";
-            string recordHash = SecurityHelper.ComputeSha256(payload);
+                // Lấy hash của bản ghi gần nhất để tạo chuỗi liên kết (Chained Hashing)
+                var lastLog = context.AuditLogs.OrderByDescending(x => x.AuditLogId).FirstOrDefault();
+                string prevHash = lastLog?.RecordHash ?? "GENESIS_BLOCK_JBILLIARD_SECURE";
 
-            var logEntry = new AuditLog
+                var now = DateTime.Now;
+                string timeStr = now.ToString("yyyy-MM-dd HH:mm:ss");
+                var jsonOpts = new JsonSerializerOptions
+                {
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                };
+                string oldJson = oldValues switch
+                {
+                    null => string.Empty,
+                    string s => s,
+                    _ => JsonSerializer.Serialize(oldValues, jsonOpts)
+                };
+                string newJson = newValues switch
+                {
+                    null => string.Empty,
+                    string s => s,
+                    _ => JsonSerializer.Serialize(newValues, jsonOpts)
+                };
+
+                // Tính mã băm bảo mật SHA-256 kết hợp dữ liệu và hash trước
+                string payload = $"{userId}_{action}_{entityName}_{entityId}_{prevHash}_{timeStr}";
+                string recordHash = SecurityHelper.ComputeSha256(payload);
+
+                var logEntry = new AuditLog
+                {
+                    UserId = userId,
+                    Action = action,
+                    EntityName = entityName,
+                    EntityId = entityId,
+                    OldValuesJson = oldJson,
+                    NewValuesJson = newJson,
+                    MachineName = Environment.MachineName,
+                    CreatedAt = now,
+                    PreviousHash = prevHash,
+                    RecordHash = recordHash
+                };
+
+                context.AuditLogs.Add(logEntry);
+                context.SaveChanges();
+            }
+            catch (Exception ex)
             {
-                UserId = userId,
-                Action = action,
-                EntityName = entityName,
-                EntityId = entityId,
-                OldValuesJson = oldJson,
-                NewValuesJson = newJson,
-                MachineName = Environment.MachineName,
-                CreatedAt = now,
-                PreviousHash = prevHash,
-                RecordHash = recordHash
-            };
-
-            context.AuditLogs.Add(logEntry);
-            context.SaveChanges();
+                // Ghi nhận lỗi fallback vào console nếu có sự cố
+                System.Diagnostics.Debug.WriteLine($"Lỗi ghi AuditLog: {ex.Message}");
+            }
         }
-        catch (Exception ex)
+    }
+
+    public List<AuditLog> GetLogs(DateTime? fromDate = null, DateTime? toDate = null, int? limit = null)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        var query = context.AuditLogs
+                           .Include(x => x.User)
+                           .AsQueryable();
+
+        if (fromDate.HasValue)
         {
-            // Ghi nhận lỗi fallback vào console nếu có sự cố
-            System.Diagnostics.Debug.WriteLine($"Lỗi ghi AuditLog: {ex.Message}");
+            DateTime start = fromDate.Value.Date;
+            query = query.Where(x => x.CreatedAt >= start);
         }
+
+        if (toDate.HasValue)
+        {
+            DateTime end = toDate.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(x => x.CreatedAt <= end);
+        }
+
+        query = query.OrderByDescending(x => x.AuditLogId);
+
+        if (limit.HasValue && limit.Value > 0)
+        {
+            query = query.Take(limit.Value);
+        }
+
+        return query.ToList();
     }
 
     public List<AuditLog> GetRecentLogs(int limit = 100)
     {
-        using var context = _contextFactory.CreateDbContext();
-        return context.AuditLogs
-                      .Include(x => x.User)
-                      .OrderByDescending(x => x.AuditLogId)
-                      .Take(limit)
-                      .ToList();
+        return GetLogs(null, null, limit);
     }
 
     public (bool IsValid, int TamperedIndex, string Message) VerifyChainIntegrity()

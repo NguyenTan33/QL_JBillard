@@ -39,6 +39,32 @@ public class AuthService : IAuthService
             return false;
         }
 
+        // Kiểm tra ca trực đang mở trong hệ thống (Quy tắc kết ca & bảo mật ca trực)
+        var activeShift = context.Shifts
+                                 .Include(s => s.User)
+                                 .OrderByDescending(s => s.ShiftId)
+                                 .FirstOrDefault(s => s.Status == ShiftStatus.Open);
+
+        if (activeShift != null)
+        {
+            // Nếu người đăng nhập không phải Admin VÀ không phải chính người đang phụ trách ca trực mở này
+            if (user.Role != UserRole.Admin && user.UserId != activeShift.UserId)
+            {
+                string activeStaffName = activeShift.User?.FullName ?? $"User #{activeShift.UserId}";
+                string activeUsername = activeShift.User?.Username ?? "N/A";
+
+                _auditService.Log(user.UserId, "LOGIN_BLOCKED_SHIFT_ACTIVE", "User", user.UserId.ToString(), null,
+                    $"Đăng nhập bị từ chối: Ca trực của [{activeStaffName} (@{activeUsername})] đang mở và chưa kết ca.");
+
+                throw new InvalidOperationException(
+                    $"⚠️ KHÔNG THỂ ĐĂNG NHẬP!\n\n" +
+                    $"Hiện tại ca trực của nhân viên [{activeStaffName} - @{activeUsername}] đang mở và chưa được kết ca.\n" +
+                    $"Hệ thống không cho phép nhân viên thu ngân khác đăng nhập vào lúc này!\n\n" +
+                    $"👉 Vui lòng đăng nhập và kết ca ở tài khoản [@{activeUsername}]\n" +
+                    $"👉 Hoặc liên hệ Quản trị viên (Admin) để vào tài khoản quản trị đóng ca hộ.");
+            }
+        }
+
         CurrentUser = user;
         _auditService.Log(user.UserId, "LOGIN_SUCCESS", "User", user.UserId.ToString(), null, $"Đăng nhập thành công với vai trò: {user.Role}");
         OnAuthStateChanged?.Invoke();
@@ -105,6 +131,13 @@ public class AuthService : IAuthService
 
     public bool UpdateUser(int userId, string fullName, string? phone, UserRole role, bool isActive, string? newPassword = null)
     {
+        // CHỐNG LEO THANG ĐẶC QUYỀN (PRIVILEGE ESCALATION):
+        // Chỉ Quản trị viên (Admin) mới được phép phân quyền, đổi vai trò Role hoặc sửa tài khoản người khác
+        if (CurrentUser == null || CurrentUser.Role != UserRole.Admin)
+        {
+            return false;
+        }
+
         using var context = _contextFactory.CreateDbContext();
         var user = context.Users.Find(userId);
         if (user == null) return false;

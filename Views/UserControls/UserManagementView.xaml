@@ -31,8 +31,6 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="10" />
                         <ColumnDefinition Width="120" />
-                        <ColumnDefinition Width="8" />
-                        <ColumnDefinition Width="140" />
                     </Grid.ColumnDefinitions>
                     
                     <Grid Grid.Column="0">
@@ -45,7 +43,6 @@
                     </Grid>
 
                     <Button Grid.Column="2" Content="Làm Mới" Style="{StaticResource SecondaryButton}" Command="{Binding LoadUsersCommand}" Height="36" />
-                    <Button Grid.Column="4" Content="+ Tạo Tài Khoản" Style="{StaticResource PrimaryButton}" Command="{Binding NewUserCommand}" Height="36" />
                 </Grid>
 
                 <!-- DataGrid Danh sách người dùng -->
@@ -199,7 +196,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <Button Grid.Column="0" Content="Hủy / Tạo Mới" Style="{StaticResource SecondaryButton}" 
+                        <Button Grid.Column="0" Content="Hủy" Style="{StaticResource SecondaryButton}" 
                                 Height="38" Command="{Binding NewUserCommand}" />
                         <Button Grid.Column="2" Content="✓ LƯU TÀI KHOẢN" Style="{StaticResource PrimaryButton}" 
                                 Height="38" Command="{Binding SaveUserCommand}" />

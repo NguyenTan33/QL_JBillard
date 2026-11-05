@@ -31,7 +31,20 @@ public class CustomerService : ICustomerService
 
         if (customer == null)
         {
-            var defaultTier = context.MembershipTiers.AsEnumerable().OrderBy(t => t.MinSpentThreshold).First();
+            var defaultTier = context.MembershipTiers.AsEnumerable().OrderBy(t => t.MinSpentThreshold).FirstOrDefault();
+            if (defaultTier == null)
+            {
+                defaultTier = new MembershipTier
+                {
+                    TierName = "Thành Viên Đồng",
+                    DiscountPercentHour = 0,
+                    DiscountPercentFnb = 0,
+                    MinSpentThreshold = 0
+                };
+                context.MembershipTiers.Add(defaultTier);
+                context.SaveChanges();
+            }
+
             customer = new Customer
             {
                 PhoneNumber = cleanPhone,

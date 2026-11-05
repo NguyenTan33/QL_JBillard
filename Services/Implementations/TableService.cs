@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using QL_JBillard.Data;
 using QL_JBillard.Domain.Entities;
 using QL_JBillard.Domain.Enums;
+using QL_JBillard.Domain.Models;
+using QL_JBillard.Helpers;
 using QL_JBillard.Services.Interfaces;
 
 namespace QL_JBillard.Services.Implementations;
@@ -329,16 +331,72 @@ public class TableService : ITableService
         }
         if (session == null) return false;
 
-        // 1. Chuyển session sang bàn mới
-        session.TableId = toTableId;
-        // Nếu chơi lẻ theo giờ thì cập nhật giá giờ theo loại bàn mới (nếu combo thì giữ nguyên giá combo)
-        if (!string.Equals(session.PlayMode, "COMBO", StringComparison.OrdinalIgnoreCase) && toTable.TableType != null)
+        decimal fromRate = session.AppliedHourlyRate > 0 ? session.AppliedHourlyRate : (fromTable.TableType?.DefaultHourlyRate ?? 50000);
+        decimal toRate = toTable.TableType?.DefaultHourlyRate ?? fromRate;
+        var now = DateTime.Now;
+
+        bool isCombo = string.Equals(session.PlayMode, "COMBO", StringComparison.OrdinalIgnoreCase);
+
+        // 1. KIỂM TRA ĐỒNG GIÁ HAY LỆCH GIÁ BÀN
+        if (isCombo || fromRate == toRate)
         {
-            session.AppliedHourlyRate = toTable.TableType.DefaultHourlyRate;
+            // TRƯỜNG HỢP 1: ĐỒNG GIÁ BÀN (VD: Bàn Lỗ 70k sang Bàn Lỗ khác 70k)
+            // Giữ nguyên StartTime ban đầu, đếm tiếp tục từ thời gian bắt đầu, đơn giá bàn giữ nguyên
+            session.TableId = toTableId;
+            session.AppliedHourlyRate = toRate;
+            // Không đổi session.StartTime! Thời gian cứ thế đếm tiếp tục từ lúc mở bàn ban đầu
+            session.Note = string.IsNullOrEmpty(session.Note)
+                ? $"Chuyển từ {fromTable.TableNumber} sang {toTable.TableNumber} (Đồng giá {toRate:N0} đ/h, cộng dồn tiếp tục)"
+                : $"{session.Note} | Chuyển sang {toTable.TableNumber} (Đồng giá)";
         }
-        session.Note = string.IsNullOrEmpty(session.Note)
-            ? $"Chuyển từ {fromTable.TableNumber} sang {toTable.TableNumber} ({reason})"
-            : $"{session.Note} | Chuyển từ {fromTable.TableNumber} sang {toTable.TableNumber} ({reason})";
+        else
+        {
+            // TRƯỜNG HỢP 2: LỆCH GIÁ BÀN (VD: từ 50k/h sang 80k/h)
+            // Chốt tiền chặng tại bàn cũ, tính số phút tại bàn cũ và lưu thành segment
+            int segmentMinutes = (int)Math.Max(1, Math.Round((now - session.StartTime).TotalMinutes));
+
+            var fromSlots = context.TimeSlotPricings
+                                   .Where(s => s.TableTypeId == fromTable.TableTypeId && s.IsActive)
+                                   .ToList();
+
+            decimal fromTableCost = BilliardPricingHelper.CalculateSessionCost(
+                session.StartTime,
+                now,
+                fromRate,
+                session.PlayMode,
+                null,
+                null,
+                fromSlots
+            );
+
+            var segment = new TableSessionSegment
+            {
+                TableId = fromTable.TableId,
+                TableNumber = fromTable.TableNumber,
+                TableTypeName = fromTable.TableType?.TypeName ?? "Bàn cũ",
+                HourlyRate = fromRate,
+                StartTime = session.StartTime,
+                EndTime = now,
+                PlayMinutes = segmentMinutes,
+                Cost = fromTableCost
+            };
+
+            var segments = session.GetSegments();
+            segments.Add(segment);
+            session.SetSegments(segments);
+
+            // Tích lũy tiền giờ và phút của bàn cũ
+            session.TimeCost += fromTableCost;
+            session.AccumulatedPlayMinutes += segmentMinutes;
+
+            // Bàn mới bắt đầu tính giờ từ đầu (từ thời điểm chuyển bàn) với đơn giá mới
+            session.TableId = toTableId;
+            session.AppliedHourlyRate = toRate;
+            session.StartTime = now;
+            session.Note = string.IsNullOrEmpty(session.Note)
+                ? $"Chuyển từ {fromTable.TableNumber} ({fromRate:N0} đ/h) sang {toTable.TableNumber} ({toRate:N0} đ/h)"
+                : $"{session.Note} | Chuyển từ {fromTable.TableNumber} sang {toTable.TableNumber}";
+        }
 
         // 2. Cập nhật trạng thái bàn đích
         toTable.CurrentSessionId = session.SessionId;
@@ -359,6 +417,17 @@ public class TableService : ITableService
         using var context = _contextFactory.CreateDbContext();
         var table = context.Tables.Find(tableId);
         if (table == null) return false;
+
+        // CHỐNG GIAN LẬN BÀN VÔ HÌNH: Không được chuyển bàn đang có phiên chơi Active về Available
+        if (newStatus == TableStatus.Available)
+        {
+            bool hasActiveSession = context.TableSessions.Any(s => s.TableId == tableId && s.Status == SessionStatus.Active);
+            if (hasActiveSession)
+            {
+                // Bàn đang có khách chơi hoạt động! Phải thanh toán hóa đơn hoặc hủy phiên có lý do
+                return false;
+            }
+        }
 
         var oldStatus = table.Status;
         table.Status = newStatus;

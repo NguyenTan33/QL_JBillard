@@ -153,8 +153,41 @@
                         <StackPanel>
                             <Grid Margin="0,0,0,10">
                                 <TextBlock Text="LỊCH SỬ PHIẾU NỘP TIỀN NGÂN HÀNG TRONG CA" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                <TextBlock Text="{Binding BankDepositSlips.Count, StringFormat='{}{0} Phiếu'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding FilteredDepositTotal, Converter={StaticResource CurrencyConverter}, StringFormat='Tổng: {0}'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,10,0" />
+                                    <TextBlock Text="{Binding BankDepositSlips.Count, StringFormat='{}{0} Phiếu'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                                </StackPanel>
                             </Grid>
+
+                            <!-- Bộ lọc lịch sử nộp tiền dành riêng cho Admin (Thu ngân không hiển thị) -->
+                            <Border Margin="0,0,0,10" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10,8"
+                                    Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}">
+                                <StackPanel>
+                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Lọc thời gian:" FontWeight="Bold" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <Button Content="Hôm nay" Command="{Binding SetDepositFilterCommand}" CommandParameter="TODAY" 
+                                                Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                                        <Button Content="Tuần này" Command="{Binding SetDepositFilterCommand}" CommandParameter="THIS_WEEK" 
+                                                Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                                        <Button Content="Tháng này" Command="{Binding SetDepositFilterCommand}" CommandParameter="THIS_MONTH" 
+                                                Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                                        <Button Content="Tất cả" Command="{Binding SetDepositFilterCommand}" CommandParameter="ALL" 
+                                                Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                                        <Button Content="Tùy chọn..." Command="{Binding SetDepositFilterCommand}" CommandParameter="CUSTOM" 
+                                                Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                                    </WrapPanel>
+
+                                    <!-- Khung chọn ngày chi tiết khi chọn CUSTOM -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0" 
+                                                Visibility="{Binding IsCustomDepositFilter, Converter={StaticResource BoolToVisConverter}}">
+                                        <TextBlock Text="Từ:" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                        <DatePicker SelectedDate="{Binding DepositFilterFromDate}" Height="24" Width="105" Margin="0,0,6,0" />
+                                        <TextBlock Text="Đến:" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                        <DatePicker SelectedDate="{Binding DepositFilterToDate}" Height="24" Width="105" Margin="0,0,6,0" />
+                                        <Button Content="Áp dụng" Command="{Binding ApplyCustomDepositFilterCommand}" Style="{StaticResource PrimaryButton}" Height="24" Padding="8,1" FontSize="11" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
 
                             <DataGrid ItemsSource="{Binding BankDepositSlips}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                                       Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"
@@ -460,8 +493,41 @@
                             <TextBlock Text="🏦 LỊCH SỬ PHIẾU NỘP TIỀN NGÂN HÀNG HỆ THỐNG" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
                             <TextBlock Text="Danh sách biên lai, bằng chứng nộp tiền vào tài khoản ngân hàng của quán" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
                         </StackPanel>
-                        <TextBlock Text="{Binding BankDepositSlips.Count, StringFormat='{}{0} Phiếu'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding FilteredDepositTotal, Converter={StaticResource CurrencyConverter}, StringFormat='Tổng: {0}'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentEmeraldDarkBrush}" Margin="0,0,10,0" />
+                            <TextBlock Text="{Binding BankDepositSlips.Count, StringFormat='{}{0} Phiếu'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" />
+                        </StackPanel>
                     </Grid>
+
+                    <!-- Bộ lọc lịch sử nộp tiền dành riêng cho Admin (Thu ngân không hiển thị) -->
+                    <Border Grid.Row="0" Margin="0,48,0,10" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10,8"
+                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}">
+                        <StackPanel>
+                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Lọc thời gian:" FontWeight="Bold" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <Button Content="Hôm nay" Command="{Binding SetDepositFilterCommand}" CommandParameter="TODAY" 
+                                        Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                                <Button Content="Tuần này" Command="{Binding SetDepositFilterCommand}" CommandParameter="THIS_WEEK" 
+                                        Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                                <Button Content="Tháng này" Command="{Binding SetDepositFilterCommand}" CommandParameter="THIS_MONTH" 
+                                        Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                                <Button Content="Tất cả" Command="{Binding SetDepositFilterCommand}" CommandParameter="ALL" 
+                                        Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                                <Button Content="Tùy chọn..." Command="{Binding SetDepositFilterCommand}" CommandParameter="CUSTOM" 
+                                        Style="{StaticResource SecondaryButton}" Height="24" Padding="8,1" Margin="0,0,4,0" FontSize="11" />
+                            </WrapPanel>
+
+                            <!-- Khung chọn ngày chi tiết khi chọn CUSTOM -->
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0" 
+                                        Visibility="{Binding IsCustomDepositFilter, Converter={StaticResource BoolToVisConverter}}">
+                                <TextBlock Text="Từ:" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                <DatePicker SelectedDate="{Binding DepositFilterFromDate}" Height="24" Width="105" Margin="0,0,6,0" />
+                                <TextBlock Text="Đến:" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                                <DatePicker SelectedDate="{Binding DepositFilterToDate}" Height="24" Width="105" Margin="0,0,6,0" />
+                                <Button Content="Áp dụng" Command="{Binding ApplyCustomDepositFilterCommand}" Style="{StaticResource PrimaryButton}" Height="24" Padding="8,1" FontSize="11" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding BankDepositSlips}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                               Background="#FFFFFF" RowBackground="#FFFFFF" AlternatingRowBackground="#F8FAFC"

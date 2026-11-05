@@ -13,7 +13,12 @@ public class BackupAndSecurityService : IBackupAndSecurityService, IDisposable
     private readonly IDbContextFactory<AppDbContext> _contextFactory;
     private readonly IAuditService _auditService;
     private System.Timers.Timer? _autoBackupTimer;
-    private const string BackupKey = "JBillard@Encrypted#2026_Backup_SecPass!";
+
+    private static string GetMasterEncryptionKey()
+    {
+        string entropy = Environment.MachineName + "_" + Environment.UserName;
+        return SecurityHelper.ComputeSha256("JBILLIARD_DYNAMIC_STORE_KEY_" + entropy);
+    }
 
     public BackupAndSecurityService(IDbContextFactory<AppDbContext> contextFactory, IAuditService auditService)
     {
@@ -46,7 +51,7 @@ public class BackupAndSecurityService : IBackupAndSecurityService, IDisposable
         if (encrypt)
         {
             // Mã hóa AES-256 chống mở trộm dữ liệu - ghi đè tệp cũ
-            SecurityHelper.EncryptFile(dbPath, backupFilePath, BackupKey);
+            SecurityHelper.EncryptFile(dbPath, backupFilePath, GetMasterEncryptionKey());
         }
         else
         {
@@ -109,7 +114,7 @@ public class BackupAndSecurityService : IBackupAndSecurityService, IDisposable
             bool isEncrypted = backupFilePath.EndsWith(".enc", StringComparison.OrdinalIgnoreCase);
             if (isEncrypted)
             {
-                SecurityHelper.DecryptFile(backupFilePath, tempRestorePath, BackupKey);
+                SecurityHelper.DecryptFile(backupFilePath, tempRestorePath, GetMasterEncryptionKey());
             }
             else
             {
@@ -235,14 +240,14 @@ public class BackupAndSecurityService : IBackupAndSecurityService, IDisposable
     {
         try
         {
-            // Xóa các file backup cũ còn sót lại để chỉ giữ đúng 1 file duy nhất ghi đè
+            // Chỉ xóa các tệp tạm thời lỗi (temp_*) tránh xóa nhầm các file backup thủ công của chủ quán
             if (Directory.Exists(backupFolder))
             {
                 var files = Directory.GetFiles(backupFolder);
                 foreach (var f in files)
                 {
                     string fname = Path.GetFileName(f);
-                    if (fname != "billiard_latest_backup.enc" && fname != "billiard_latest_backup.db")
+                    if (fname.StartsWith("temp_", StringComparison.OrdinalIgnoreCase) || fname.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase))
                     {
                         try { File.Delete(f); } catch { }
                     }

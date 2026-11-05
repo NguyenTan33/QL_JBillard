@@ -5,7 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:QL_JBillard.Views.UserControls"
              mc:Ignorable="d" 
-             d:DesignHeight="285" d:DesignWidth="255">
+             d:DesignHeight="300" d:DesignWidth="285">
     <Border Background="#FFFFFF" 
             BorderBrush="{Binding Status, Converter={StaticResource StatusToColorConverter}}" 
             BorderThickness="2" 

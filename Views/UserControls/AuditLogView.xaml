@@ -56,51 +56,92 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- Toolbar Trên Cùng: Tiêu đề + Bộ Lọc Ngày + Nút Làm Mới Đầy Đặn Không Bị Che -->
+                <!-- Toolbar Trên Cùng: Tiêu đề + Thao tác (Hàng 1) & Bộ lọc thời gian Hôm nay/Tùy chọn ngày/Tất cả (Hàng 2) -->
                 <Grid Grid.Row="0" Margin="0,0,0,16">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="14" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="NHẬT KÝ HOẠT ĐỘNG VẬN HÀNH" 
-                                   FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                        <TextBlock Text="Mở/đóng bàn, đổi bàn, gọi món, nộp tiền két, sửa tài khoản..." 
-                                   FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
-                    </StackPanel>
+                    <!-- Hàng 1: Tiêu đề bên trái, nút hành động bên phải -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Bộ lọc theo ngày: Tất cả / Hôm nay / Hôm qua / 7 ngày qua -->
-                    <Border Grid.Column="2" Background="#F1F5F9" CornerRadius="8" Padding="4" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <RadioButton Content="Tất Cả" Style="{StaticResource SegmentedTabRadioStyle}" 
-                                         IsChecked="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter=ALL, Mode=OneWay}"
-                                         Command="{Binding SetDateFilterCommand}" CommandParameter="ALL" />
-                            <RadioButton Content="Hôm Nay" Style="{StaticResource SegmentedTabRadioStyle}" 
-                                         IsChecked="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter=TODAY, Mode=OneWay}"
-                                         Command="{Binding SetDateFilterCommand}" CommandParameter="TODAY" />
-                            <RadioButton Content="Hôm Qua" Style="{StaticResource SegmentedTabRadioStyle}" 
-                                         IsChecked="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter=YESTERDAY, Mode=OneWay}"
-                                         Command="{Binding SetDateFilterCommand}" CommandParameter="YESTERDAY" />
-                            <RadioButton Content="7 Ngày Qua" Style="{StaticResource SegmentedTabRadioStyle}" 
-                                         IsChecked="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter=7DAYS, Mode=OneWay}"
-                                         Command="{Binding SetDateFilterCommand}" CommandParameter="7DAYS" />
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="NHẬT KÝ HOẠT ĐỘNG VẬN HÀNH" 
+                                       FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="Mở/đóng bàn, đổi bàn, gọi món, nộp tiền két, sửa tài khoản..." 
+                                       FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
                         </StackPanel>
+
+                        <!-- Nút Xuất File & Làm Mới Đầy Đặn, Rộng Rãi -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="📥 Xuất Nhật Ký (Excel)" Style="{StaticResource PrimaryButton}" 
+                                    Height="36" Padding="16,0" Margin="0,0,8,0" FontSize="12" FontWeight="Bold"
+                                    Command="{Binding ExportAuditLogsCommand}" />
+
+                            <Button Content="🔄 Tải Lại Dữ Liệu" Style="{StaticResource SecondaryButton}" 
+                                    Height="36" Padding="14,0" FontSize="12" FontWeight="SemiBold"
+                                    Command="{Binding LoadLogsCommand}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Hàng 2: Bộ lọc ngày (Mặc định mở vào là Hôm Nay, có Tùy chọn ngày, Tất cả) -->
+                    <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="8" Padding="10,8" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Nhóm nút lọc nhanh (Hôm Nay là đầu tiên và mặc định) -->
+                            <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="6" Padding="4" BorderBrush="#CBD5E1" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton Content="Hôm Nay" Style="{StaticResource SegmentedTabRadioStyle}" 
+                                                 IsChecked="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter=TODAY, Mode=OneWay}"
+                                                 Command="{Binding SetDateFilterCommand}" CommandParameter="TODAY"
+                                                 Height="32" Padding="14,0" Margin="0,0,4,0" FontSize="12" />
+                                    <RadioButton Content="Hôm Qua" Style="{StaticResource SegmentedTabRadioStyle}" 
+                                                 IsChecked="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter=YESTERDAY, Mode=OneWay}"
+                                                 Command="{Binding SetDateFilterCommand}" CommandParameter="YESTERDAY"
+                                                 Height="32" Padding="14,0" Margin="0,0,4,0" FontSize="12" />
+                                    <RadioButton Content="7 Ngày Qua" Style="{StaticResource SegmentedTabRadioStyle}" 
+                                                 IsChecked="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter=7DAYS, Mode=OneWay}"
+                                                 Command="{Binding SetDateFilterCommand}" CommandParameter="7DAYS"
+                                                 Height="32" Padding="14,0" Margin="0,0,4,0" FontSize="12" />
+                                    <RadioButton Content="Tùy Chọn Ngày" Style="{StaticResource SegmentedTabRadioStyle}" 
+                                                 IsChecked="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter=CUSTOM, Mode=OneWay}"
+                                                 Command="{Binding SetDateFilterCommand}" CommandParameter="CUSTOM"
+                                                 Height="32" Padding="14,0" Margin="0,0,4,0" FontSize="12" />
+                                    <RadioButton Content="Tất Cả" Style="{StaticResource SegmentedTabRadioStyle}" 
+                                                 IsChecked="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsConverter}, ConverterParameter=ALL, Mode=OneWay}"
+                                                 Command="{Binding SetDateFilterCommand}" CommandParameter="ALL"
+                                                 Height="32" Padding="14,0" FontSize="12" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Khung DatePicker xuất hiện khi chọn Tùy Chọn Ngày (CUSTOM) -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                                        Visibility="{Binding SelectedDateFilter, Converter={StaticResource StringEqualsToVisConverter}, ConverterParameter=CUSTOM}">
+                                <TextBlock Text="Từ ngày:" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay}" Width="125" Height="32" VerticalContentAlignment="Center" />
+                                <TextBlock Text="➔ đến:" VerticalAlignment="Center" Margin="8,0" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                                <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Width="125" Height="32" VerticalContentAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Badge thông tin số lượng bản ghi hiển thị -->
+                            <Border Grid.Column="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10,6" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding LogCountText}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource AccentEmeraldDarkBrush}" />
+                            </Border>
+                        </Grid>
                     </Border>
-
-                    <!-- Nút Xuất File CSV & Làm Mới Đầy Đặn, Rộng Rãi -->
-                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="📥 Xuất File Nhật Ký (CSV)" Style="{StaticResource PrimaryButton}" 
-                                Height="38" Padding="14,0" Margin="0,0,8,0" FontSize="12" FontWeight="Bold"
-                                Command="{Binding ExportAuditLogsCommand}" />
-
-                        <Button Content="🔄 Làm Mới Dữ Liệu" Style="{StaticResource SecondaryButton}" 
-                                Height="38" Padding="14,0" FontSize="12" FontWeight="SemiBold"
-                                Command="{Binding LoadLogsCommand}" />
-                    </StackPanel>
                 </Grid>
 
                 <DataGrid Grid.Row="1" ItemsSource="{Binding Logs}" AutoGenerateColumns="False" 

@@ -1,4 +1,5 @@
 using QL_JBillard.Domain.Entities;
+using QL_JBillard.Domain.Models;
 
 namespace QL_JBillard.Services.DTOs;
 
@@ -20,7 +21,8 @@ public class LiveBillDto
     
     public DateTime StartTime { get; set; }
     public DateTime CurrentTime { get; set; } = DateTime.Now;
-    public TimeSpan ElapsedTime => CurrentTime >= StartTime ? CurrentTime - StartTime : TimeSpan.Zero;
+    public int AccumulatedMinutes { get; set; } = 0;
+    public TimeSpan ElapsedTime => (CurrentTime >= StartTime ? CurrentTime - StartTime : TimeSpan.Zero) + TimeSpan.FromMinutes(AccumulatedMinutes);
     public int TotalMinutes => (int)ElapsedTime.TotalMinutes;
     
     public decimal TimeCost { get; set; }
@@ -38,4 +40,6 @@ public class LiveBillDto
     
     public Customer? Customer { get; set; }
     public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public List<TableSessionSegment> Segments { get; set; } = new();
+    public bool HasMultipleSegments => Segments.Count > 1;
 }

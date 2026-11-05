@@ -16,6 +16,16 @@ public partial class TableManagementViewModel : ObservableObject
     private readonly IInventoryService _inventoryService;
     private readonly IAuthService _authService;
 
+    public bool SuppressConfirmation { get; set; } = false;
+
+    private void ShowAlert(string message, string title, MessageBoxImage image = MessageBoxImage.Warning)
+    {
+        if (!SuppressConfirmation)
+        {
+            MessageBox.Show(message, title, MessageBoxButton.OK, image);
+        }
+    }
+
     [ObservableProperty]
     private string _activeSubTab = "TABLES"; // TABLES, AREAS_FLOORS, TYPES_PRICES
 
@@ -320,22 +330,24 @@ public partial class TableManagementViewModel : ObservableObject
         if (table == null) return;
         if (table.Status == TableStatus.Occupied)
         {
-            MessageBox.Show(
+            ShowAlert(
                 $"Không thể xóa bàn '{table.TableNumber}' khi bàn đang có khách chơi!\nVui lòng hoàn tất thanh toán hoặc chuyển phiên chơi trước khi xóa bàn.",
                 "Bàn Đang Có Khách",
-                MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             Message = $"❌ Không thể xóa bàn {table.TableNumber} khi đang có khách chơi!";
             return;
         }
 
-        var confirm = MessageBox.Show(
-            $"Bạn có chắc chắn muốn xóa bàn '{table.TableNumber}' không?\n\n(Lưu ý: Nếu bàn đã từng phát sinh hóa đơn hoặc phiên chơi, hệ thống sẽ bảo lưu lịch sử kế toán và chuyển bàn sang trạng thái ngừng hoạt động)",
-            "Xác Nhận Xóa Bàn",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+        if (!SuppressConfirmation)
+        {
+            var confirm = MessageBox.Show(
+                $"Bạn có chắc chắn muốn xóa bàn '{table.TableNumber}' không?\n\n(Lưu ý: Nếu bàn đã từng phát sinh hóa đơn hoặc phiên chơi, hệ thống sẽ bảo lưu lịch sử kế toán và chuyển bàn sang trạng thái ngừng hoạt động)",
+                "Xác Nhận Xóa Bàn",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
 
-        if (confirm != MessageBoxResult.Yes) return;
+            if (confirm != MessageBoxResult.Yes) return;
+        }
 
         try
         {
@@ -348,12 +360,12 @@ public partial class TableManagementViewModel : ObservableObject
             }
             else
             {
-                MessageBox.Show($"Không thể xóa bàn {table.TableNumber} do đang có dữ liệu ràng buộc.", "Lỗi Xóa Bàn", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowAlert($"Không thể xóa bàn {table.TableNumber} do đang có dữ liệu ràng buộc.", "Lỗi Xóa Bàn", MessageBoxImage.Error);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Không thể xóa bàn {table.TableNumber} do có dữ liệu liên kết tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowAlert($"Không thể xóa bàn {table.TableNumber} do có dữ liệu liên kết tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxImage.Warning);
         }
     }
 
@@ -419,22 +431,24 @@ public partial class TableManagementViewModel : ObservableObject
 
         if (areaCount > 0 || tableCount > 0)
         {
-            MessageBox.Show(
+            ShowAlert(
                 $"Không thể xóa tầng '{floor.FloorName}'!\n\nHiện tại đang có {areaCount} khu vực và {tableCount} bàn trực thuộc tầng này.\nVui lòng chuyển hoặc xóa các bàn và khu vực sang tầng khác trước khi xóa tầng này.",
                 "Cảnh Báo Tham Chiếu Khóa Ngoại",
-                MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             Message = $"❌ Không thể xóa tầng '{floor.FloorName}' vì có {areaCount} khu vực và {tableCount} bàn đang trực thuộc!";
             return;
         }
 
-        var confirm = MessageBox.Show(
-            $"Bạn có chắc chắn muốn xóa tầng '{floor.FloorName}' khỏi hệ thống không?",
-            "Xác Nhận Xóa Tầng Lầu",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+        if (!SuppressConfirmation)
+        {
+            var confirm = MessageBox.Show(
+                $"Bạn có chắc chắn muốn xóa tầng '{floor.FloorName}' khỏi hệ thống không?",
+                "Xác Nhận Xóa Tầng Lầu",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
 
-        if (confirm != MessageBoxResult.Yes) return;
+            if (confirm != MessageBoxResult.Yes) return;
+        }
 
         try
         {
@@ -447,12 +461,12 @@ public partial class TableManagementViewModel : ObservableObject
             }
             else
             {
-                MessageBox.Show($"Không thể xóa tầng '{floor.FloorName}' vì đang có dữ liệu liên kết.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowAlert($"Không thể xóa tầng '{floor.FloorName}' vì đang có dữ liệu liên kết.", "Lỗi", MessageBoxImage.Error);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Không thể xóa tầng '{floor.FloorName}' do có dữ liệu liên kết tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowAlert($"Không thể xóa tầng '{floor.FloorName}' do có dữ liệu liên kết tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxImage.Warning);
         }
     }
 
@@ -519,22 +533,24 @@ public partial class TableManagementViewModel : ObservableObject
         int tableCount = TablesList.Count(t => t.AreaId == area.AreaId);
         if (tableCount > 0)
         {
-            MessageBox.Show(
+            ShowAlert(
                 $"Không thể xóa khu vực '{area.AreaName}'!\n\nHiện tại đang có {tableCount} bàn bida đang thuộc khu vực này.\nVui lòng đổi hoặc chuyển các bàn này sang khu vực khác trước khi xóa khu vực.",
                 "Cảnh Báo Tham Chiếu Khóa Ngoại",
-                MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             Message = $"❌ Không thể xóa khu vực '{area.AreaName}' vì có {tableCount} bàn đang thuộc khu vực này!";
             return;
         }
 
-        var confirm = MessageBox.Show(
-            $"Bạn có chắc chắn muốn xóa khu vực '{area.AreaName}' khỏi hệ thống không?",
-            "Xác Nhận Xóa Khu Vực",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+        if (!SuppressConfirmation)
+        {
+            var confirm = MessageBox.Show(
+                $"Bạn có chắc chắn muốn xóa khu vực '{area.AreaName}' khỏi hệ thống không?",
+                "Xác Nhận Xóa Khu Vực",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
 
-        if (confirm != MessageBoxResult.Yes) return;
+            if (confirm != MessageBoxResult.Yes) return;
+        }
 
         try
         {
@@ -547,12 +563,12 @@ public partial class TableManagementViewModel : ObservableObject
             }
             else
             {
-                MessageBox.Show($"Không thể xóa khu vực '{area.AreaName}' vì đang có dữ liệu liên kết.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowAlert($"Không thể xóa khu vực '{area.AreaName}' vì đang có dữ liệu liên kết.", "Lỗi", MessageBoxImage.Error);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Không thể xóa khu vực '{area.AreaName}' do có dữ liệu liên kết tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowAlert($"Không thể xóa khu vực '{area.AreaName}' do có dữ liệu liên kết tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxImage.Warning);
         }
     }
 
@@ -628,10 +644,9 @@ public partial class TableManagementViewModel : ObservableObject
         int tableCount = TablesList.Count(t => t.TableTypeId == type.TableTypeId);
         if (tableCount > 0)
         {
-            MessageBox.Show(
+            ShowAlert(
                 $"Không thể xóa loại bàn '{type.TypeName}'!\n\nHiện tại đang có {tableCount} bàn bida đang sử dụng loại bàn này.\nVui lòng chuyển loại bàn của các bàn đó sang loại khác trước khi xóa loại bàn này.",
                 "Cảnh Báo Tham Chiếu Khóa Ngoại",
-                MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             Message = $"❌ Không thể xóa loại bàn '{type.TypeName}' vì có {tableCount} bàn đang sử dụng!";
             return;
@@ -640,22 +655,24 @@ public partial class TableManagementViewModel : ObservableObject
         int slotCount = TimeSlotsList.Count(s => s.TableTypeId == type.TableTypeId);
         if (slotCount > 0)
         {
-            MessageBox.Show(
+            ShowAlert(
                 $"Không thể xóa loại bàn '{type.TypeName}'!\n\nHiện tại đang có {slotCount} khung giờ giá cấu hình cho loại bàn này.\nVui lòng xóa các khung giờ giá liên quan trước khi xóa loại bàn.",
                 "Cảnh Báo Tham Chiếu Khóa Ngoại",
-                MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             Message = $"❌ Không thể xóa loại bàn '{type.TypeName}' vì có {slotCount} khung giờ giá đang áp dụng!";
             return;
         }
 
-        var confirm = MessageBox.Show(
-            $"Bạn có chắc chắn muốn xóa loại bàn '{type.TypeName}' khỏi hệ thống không?",
-            "Xác Nhận Xóa Loại Bàn",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+        if (!SuppressConfirmation)
+        {
+            var confirm = MessageBox.Show(
+                $"Bạn có chắc chắn muốn xóa loại bàn '{type.TypeName}' khỏi hệ thống không?",
+                "Xác Nhận Xóa Loại Bàn",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
 
-        if (confirm != MessageBoxResult.Yes) return;
+            if (confirm != MessageBoxResult.Yes) return;
+        }
 
         try
         {
@@ -668,12 +685,12 @@ public partial class TableManagementViewModel : ObservableObject
             }
             else
             {
-                MessageBox.Show($"Không thể xóa loại bàn '{type.TypeName}' vì đang có dữ liệu liên kết.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowAlert($"Không thể xóa loại bàn '{type.TypeName}' vì đang có dữ liệu liên kết.", "Lỗi", MessageBoxImage.Error);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Không thể xóa loại bàn '{type.TypeName}' do có dữ liệu liên kết tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowAlert($"Không thể xóa loại bàn '{type.TypeName}' do có dữ liệu liên kết tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxImage.Warning);
         }
     }
 
@@ -929,13 +946,16 @@ public partial class TableManagementViewModel : ObservableObject
     public void DeleteCombo(PlayCombo? combo)
     {
         if (combo == null) return;
-        var confirm = MessageBox.Show(
-            $"Bạn có chắc chắn muốn xóa gói combo '{combo.ComboName}' ({combo.Price:N0} đ) khỏi hệ thống không?",
-            "Xác Nhận Xóa Combo",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+        if (!SuppressConfirmation)
+        {
+            var confirm = MessageBox.Show(
+                $"Bạn có chắc chắn muốn xóa gói combo '{combo.ComboName}' ({combo.Price:N0} đ) khỏi hệ thống không?",
+                "Xác Nhận Xóa Combo",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
 
-        if (confirm != MessageBoxResult.Yes) return;
+            if (confirm != MessageBoxResult.Yes) return;
+        }
 
         try
         {
@@ -947,12 +967,12 @@ public partial class TableManagementViewModel : ObservableObject
             }
             else
             {
-                MessageBox.Show($"Không thể xóa gói combo '{combo.ComboName}' vì gói đang được sử dụng hoặc có dữ liệu liên kết.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowAlert($"Không thể xóa gói combo '{combo.ComboName}' vì gói đang được sử dụng hoặc có dữ liệu liên kết.", "Lỗi", MessageBoxImage.Error);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Không thể xóa gói combo '{combo.ComboName}' do có dữ liệu hóa đơn/phiên chơi đang tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxButton.OK, MessageBoxImage.Warning);
+            ShowAlert($"Không thể xóa gói combo '{combo.ComboName}' do có dữ liệu hóa đơn/phiên chơi đang tham chiếu: {ex.Message}", "Lỗi Khóa Ngoại", MessageBoxImage.Warning);
         }
     }
 }

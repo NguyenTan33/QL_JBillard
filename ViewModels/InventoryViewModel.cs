@@ -18,6 +18,9 @@ public partial class InventoryViewModel : ObservableObject
     private ObservableCollection<ProductCategory> _categories = new();
 
     [ObservableProperty]
+    private ObservableCollection<ProductCategory> _formCategories = new();
+
+    [ObservableProperty]
     private ProductCategory? _selectedCategory;
 
     [ObservableProperty]
@@ -103,6 +106,11 @@ public partial class InventoryViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsAdmin));
         var cats = _inventoryService.GetAllCategories();
+
+        // 1. Danh sách danh mục thực tế cho Form Thêm/Sửa (Không có mục 'Tất cả danh mục')
+        FormCategories = new ObservableCollection<ProductCategory>(cats);
+
+        // 2. Danh sách danh mục có mục 'Tất cả danh mục' để lọc bảng
         var allCats = new List<ProductCategory>
         {
             new ProductCategory { CategoryId = 0, CategoryName = "── Tất Cả Danh Mục ──" }
@@ -115,7 +123,7 @@ public partial class InventoryViewModel : ObservableObject
         Units = new ObservableCollection<Unit>(units);
 
         FormSelectedUnit = Units.FirstOrDefault();
-        FormSelectedCategory = Categories.FirstOrDefault(c => c.CategoryId > 0) ?? Categories.FirstOrDefault();
+        FormSelectedCategory = FormCategories.FirstOrDefault();
 
         FilterProducts();
         RefreshAlerts();
@@ -180,6 +188,7 @@ public partial class InventoryViewModel : ObservableObject
     private void PrepareNewProduct()
     {
         IsEditing = false;
+        SelectedProduct = null;
         FormProductCode = string.Empty;
         FormProductName = string.Empty;
         FormImagePath = null;
@@ -188,7 +197,7 @@ public partial class InventoryViewModel : ObservableObject
         FormInitialStock = 20;
         FormMinAlert = 5;
         FormIsInventory = true;
-        FormSelectedCategory = Categories.FirstOrDefault();
+        FormSelectedCategory = FormCategories.FirstOrDefault();
         FormSelectedUnit = Units.FirstOrDefault();
         Message = null;
     }
@@ -207,9 +216,9 @@ public partial class InventoryViewModel : ObservableObject
         FormSellingPrice = product.SellingPrice;
         FormMinAlert = product.MinStockAlert;
         FormIsInventory = product.IsInventoryItem;
-        FormSelectedCategory = Categories.FirstOrDefault(c => c.CategoryId == product.CategoryId);
-        FormSelectedUnit = Units.FirstOrDefault(u => u.UnitId == product.UnitId);
-        Message = null;
+        FormSelectedCategory = FormCategories.FirstOrDefault(c => c.CategoryId == product.CategoryId) ?? FormCategories.FirstOrDefault();
+        FormSelectedUnit = Units.FirstOrDefault(u => u.UnitId == product.UnitId) ?? Units.FirstOrDefault();
+        Message = $"✎ Đang chỉnh sửa món: [{product.ProductName}]. Hãy đổi danh mục/ĐVT và bấm 'CẬP NHẬT SẢN PHẨM'.";
     }
 
     [RelayCommand]
@@ -223,13 +232,19 @@ public partial class InventoryViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(FormProductCode) || string.IsNullOrWhiteSpace(FormProductName))
         {
-            Message = "Vui lòng nhập mã và tên sản phẩm!";
+            Message = "⚠️ Vui lòng nhập mã và tên sản phẩm!";
             return;
         }
 
-        if (FormSelectedCategory == null || FormSelectedUnit == null)
+        if (FormSelectedCategory == null || FormSelectedCategory.CategoryId <= 0)
         {
-            Message = "Vui lòng chọn danh mục và đơn vị tính!";
+            Message = "⚠️ Vui lòng chọn một nhóm danh mục cụ thể!";
+            return;
+        }
+
+        if (FormSelectedUnit == null || FormSelectedUnit.UnitId <= 0)
+        {
+            Message = "⚠️ Vui lòng chọn đơn vị tính!";
             return;
         }
 
@@ -247,8 +262,12 @@ public partial class InventoryViewModel : ObservableObject
                 SelectedProduct.MinStockAlert = FormMinAlert;
                 SelectedProduct.IsInventoryItem = FormIsInventory;
 
+                // Cập nhật luôn navigation properties trong bộ nhớ để giao diện phản ánh đúng ngay
+                SelectedProduct.Category = FormSelectedCategory;
+                SelectedProduct.Unit = FormSelectedUnit;
+
                 _inventoryService.SaveProduct(SelectedProduct);
-                Message = "Cập nhật sản phẩm thành công!";
+                Message = $"✅ Đã cập nhật thành công sản phẩm '{SelectedProduct.ProductName}'!";
             }
             else
             {
@@ -267,7 +286,7 @@ public partial class InventoryViewModel : ObservableObject
                 };
 
                 _inventoryService.SaveProduct(newProduct, FormInitialStock);
-                Message = "Thêm mới sản phẩm thành công!";
+                Message = $"✅ Đã thêm mới thành công sản phẩm '{newProduct.ProductName}'!";
             }
 
             PrepareNewProduct();
@@ -338,10 +357,10 @@ public partial class InventoryViewModel : ObservableObject
 
         LoadData();
 
-        if (currentSelectedCatId.HasValue)
+        if (currentSelectedCatId.HasValue && currentSelectedCatId.Value > 0)
         {
-            FormSelectedCategory = Categories.FirstOrDefault(c => c.CategoryId == currentSelectedCatId.Value) 
-                                ?? Categories.FirstOrDefault(c => c.CategoryId > 0);
+            FormSelectedCategory = FormCategories.FirstOrDefault(c => c.CategoryId == currentSelectedCatId.Value) 
+                                ?? FormCategories.FirstOrDefault();
         }
         if (currentSelectedUnitId.HasValue)
         {

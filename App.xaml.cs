@@ -24,6 +24,27 @@ public partial class App : Application
             return;
         }
 
+        if (e.Args.Contains("--test-shift"))
+        {
+            Tests.ShiftSecurityTest.Run();
+            Shutdown();
+            return;
+        }
+
+        if (e.Args.Contains("--hacker-test"))
+        {
+            Tests.HackerChaosTest.Run();
+            Shutdown();
+            return;
+        }
+
+        if (e.Args.Contains("--hacker-test-2"))
+        {
+            Tests.HackerChaosTest2.Run();
+            Shutdown();
+            return;
+        }
+
         if (e.Args.Contains("--clean-db"))
         {
             var cleanServices = new ServiceCollection();

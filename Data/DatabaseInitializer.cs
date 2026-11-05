@@ -44,6 +44,7 @@ public static class DatabaseInitializer
 
         // Migration cho Invoices và OrderItems
         try { context.Database.ExecuteSqlRaw("ALTER TABLE Invoices ADD COLUMN ShiftId INTEGER NULL;"); } catch { }
+        try { context.Database.ExecuteSqlRaw("ALTER TABLE TableSessions ADD COLUMN AccumulatedPlayMinutes INTEGER NOT NULL DEFAULT 0;"); } catch { }
         try { context.Database.ExecuteSqlRaw("ALTER TABLE OrderItems ADD COLUMN IsCompleted INTEGER NOT NULL DEFAULT 0;"); } catch { }
         try { context.Database.ExecuteSqlRaw("ALTER TABLE OrderItems ADD COLUMN CompletedAt TEXT NULL;"); } catch { }
         try { context.Database.ExecuteSqlRaw("ALTER TABLE OrderItems ADD COLUMN CompletedByUserId INTEGER NULL;"); } catch { }
@@ -98,6 +99,7 @@ public static class DatabaseInitializer
         try { context.Database.ExecuteSqlRaw("ALTER TABLE TableSessions ADD COLUMN ComboName TEXT NULL;"); } catch { }
         try { context.Database.ExecuteSqlRaw("ALTER TABLE TableSessions ADD COLUMN ComboPrice TEXT NULL;"); } catch { }
         try { context.Database.ExecuteSqlRaw("ALTER TABLE TableSessions ADD COLUMN ComboDurationMinutes INTEGER NULL;"); } catch { }
+        try { context.Database.ExecuteSqlRaw("ALTER TABLE TableSessions ADD COLUMN TransferHistoryJson TEXT NULL;"); } catch { }
         try { context.Database.ExecuteSqlRaw("ALTER TABLE Invoices ADD COLUMN AppliedComboName TEXT NULL;"); } catch { }
 
         // 1. Seed System Settings nếu chưa có

@@ -73,10 +73,7 @@
 
                 <StackPanel Grid.Row="0" Margin="0,0,0,16">
                     <Grid Margin="0,0,0,12">
-                        <StackPanel>
-                            <TextBlock Text="SAO LƯU CƠ SỞ DỮ LIỆU TỰ ĐỘNG &amp; MÃ HÓA" FontSize="16" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" />
-                            <TextBlock Text="Tự động sao lưu ghi đè và mã hóa AES-256 an toàn sau mỗi chu kỳ và sau thanh toán." FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
-                        </StackPanel>
+                        <TextBlock Text="SAO LƯU CƠ SỞ DỮ LIỆU TỰ ĐỘNG &amp; MÃ HÓA" FontSize="16" FontWeight="Bold" Foreground="{StaticResource AccentAmberBrush}" VerticalAlignment="Center" />
                         <Button Content="⚡ Sao Lưu Ngay" Style="{StaticResource PrimaryButton}" Height="34" HorizontalAlignment="Right" 
                                 Command="{Binding CreateBackupNowCommand}" />
                     </Grid>
@@ -89,10 +86,7 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="CÀI ĐẶT CHU KỲ TỰ ĐỘNG SAO LƯU" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" />
-                                <TextBlock Text="Chu kỳ tự động ghi đè bản sao lưu an toàn khi ứng dụng đang mở" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" />
-                            </StackPanel>
+                            <TextBlock Grid.Column="0" Text="CÀI ĐẶT CHU KỲ TỰ ĐỘNG SAO LƯU" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" />
                             <ComboBox Grid.Column="1" ItemsSource="{Binding IntervalOptions}" SelectedItem="{Binding SelectedInterval}"
                                       DisplayMemberPath="DisplayName" Width="210" Height="36" Margin="10,0" Foreground="#000000" VerticalAlignment="Center" />
                             <Button Grid.Column="2" Content="Lưu Chu Kỳ" Style="{StaticResource PrimaryButton}" Height="36" Padding="14,0" VerticalAlignment="Center"

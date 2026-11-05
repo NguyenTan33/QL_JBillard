@@ -19,9 +19,11 @@ public class VietQrService : IVietQrService
 
         string tag38_Merchant = FormatTlv("38", sub00_Guid + sub01_Beneficiary + sub02_Service);
 
-        // 2. Nội dung giao dịch (Tag 62)
-        string safeContent = RemoveDiacritics(transferContent).Replace(" ", "%20");
-        if (safeContent.Length > 25) safeContent = safeContent.Substring(0, 25);
+        // 2. Nội dung giao dịch (Tag 62 chuẩn Napas 247 EMVCo Tag 08: chữ, số và khoảng trắng - không dùng %20 URL encoding)
+        string safeContent = RemoveDiacritics(transferContent).Trim();
+        safeContent = System.Text.RegularExpressions.Regex.Replace(safeContent, @"[^a-zA-Z0-9 ]", " ").Trim();
+        safeContent = System.Text.RegularExpressions.Regex.Replace(safeContent, @"\s+", " ");
+        if (safeContent.Length > 25) safeContent = safeContent.Substring(0, 25).Trim();
         string tag62_Additional = FormatTlv("62", FormatTlv("08", safeContent));
 
         // 3. Ghép các thẻ dữ liệu EMVCo

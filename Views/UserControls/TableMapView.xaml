@@ -124,17 +124,17 @@
             </WrapPanel>
         </Border>
 
-        <!-- 3. Sơ đồ các bàn (Grid các Card Bàn) -->
+        <!-- 3. Sơ đồ các bàn (Grid các Card Bàn Căn Giữa Đều Đặn) -->
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding FilteredTables}">
+            <ItemsControl ItemsSource="{Binding FilteredTables}" HorizontalAlignment="Center">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" />
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <local:TableCardControl Width="255" Height="285" />
+                        <local:TableCardControl Width="285" Height="300" Margin="6" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

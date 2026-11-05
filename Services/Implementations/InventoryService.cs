@@ -134,6 +134,11 @@ public class InventoryService : IInventoryService
         using var context = _contextFactory.CreateDbContext();
         if (product.ProductId == 0)
         {
+            // Xóa navigation properties để EF Core không lưu trùng
+            product.Category = null!;
+            product.Unit = null!;
+            product.InventoryItem = null;
+
             context.Products.Add(product);
             context.SaveChanges();
 
@@ -151,7 +156,20 @@ public class InventoryService : IInventoryService
         }
         else
         {
-            context.Products.Update(product);
+            var existing = context.Products.Find(product.ProductId);
+            if (existing == null) return false;
+
+            existing.ProductCode = product.ProductCode;
+            existing.ProductName = product.ProductName;
+            existing.ImagePath = product.ImagePath;
+            existing.CostPrice = product.CostPrice;
+            existing.SellingPrice = product.SellingPrice;
+            existing.CategoryId = product.CategoryId;
+            existing.UnitId = product.UnitId;
+            existing.MinStockAlert = product.MinStockAlert;
+            existing.IsInventoryItem = product.IsInventoryItem;
+            existing.IsActive = product.IsActive;
+
             context.SaveChanges();
         }
         return true;
@@ -175,7 +193,7 @@ public class InventoryService : IInventoryService
         var session = context.TableSessions.Find(sessionId);
         var product = context.Products.Include(p => p.InventoryItem).FirstOrDefault(p => p.ProductId == productId);
 
-        if (session == null || product == null || session.Status != SessionStatus.Active) return false;
+        if (session == null || product == null || !product.IsActive || session.Status != SessionStatus.Active) return false;
 
         // Nếu sản phẩm quản lý tồn kho, kiểm tra số lượng hiện có
         if (product.IsInventoryItem)
@@ -249,6 +267,12 @@ public class InventoryService : IInventoryService
                           .FirstOrDefault(o => o.OrderItemId == orderItemId);
 
         if (item == null || item.IsCancelled) return false;
+
+        // CHỐNG GIAN LẬN KHO: Món tặng kèm theo gói combo không được hủy riêng lẻ để hoàn kho ảo
+        if (item.IsComboItem)
+        {
+            return false;
+        }
 
         item.IsCancelled = true;
         item.CancelledByUserId = userId;
@@ -338,9 +362,24 @@ public class InventoryService : IInventoryService
             context.InventoryItems.Add(product.InventoryItem);
         }
 
+        // Tính giá vốn bình quân gia quyền (Weighted Average Cost)
+        int oldQty = Math.Max(0, product.InventoryItem.QuantityOnHand);
+        if (unitCost > 0)
+        {
+            decimal oldCost = product.CostPrice > 0 ? product.CostPrice : unitCost;
+            if (oldQty + quantity > 0)
+            {
+                decimal weightedCost = ((oldQty * oldCost) + (quantity * unitCost)) / (oldQty + quantity);
+                product.CostPrice = Math.Round(weightedCost, 0, MidpointRounding.AwayFromZero);
+            }
+            else
+            {
+                product.CostPrice = unitCost;
+            }
+        }
+
         product.InventoryItem.QuantityOnHand += quantity;
         product.InventoryItem.LastRestockedAt = DateTime.Now;
-        product.CostPrice = unitCost; // Cập nhật giá vốn mới
 
         var tx = new StockTransaction
         {

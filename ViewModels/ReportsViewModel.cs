@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -7,6 +8,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Media;
 using Microsoft.Win32;
+using MiniExcelLibs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QL_JBillard.Domain.Entities;
@@ -25,13 +27,29 @@ public partial class ReportsViewModel : ObservableObject
     private string _activeTab = "OVERVIEW"; // OVERVIEW, TABLES, PRODUCTS, COMPARISON
 
     [ObservableProperty]
-    private string _selectedPreset = "THIS_WEEK"; // TODAY, THIS_WEEK, THIS_MONTH, CUSTOM
+    private string _selectedPreset = "THIS_WEEK"; // TODAY, THIS_WEEK, THIS_MONTH, THIS_QUARTER, BY_MONTH, BY_QUARTER, CUSTOM
 
     [ObservableProperty]
     private DateTime _fromDate = DateTime.Now.AddDays(-7);
 
     [ObservableProperty]
     private DateTime _toDate = DateTime.Now;
+
+    [ObservableProperty]
+    private int _selectedMonth = DateTime.Now.Month;
+
+    [ObservableProperty]
+    private int _selectedQuarter = (DateTime.Now.Month - 1) / 3 + 1;
+
+    [ObservableProperty]
+    private int _selectedYear = DateTime.Now.Year;
+
+    public List<int> AvailableMonths { get; } = Enumerable.Range(1, 12).ToList();
+    public List<int> AvailableQuarters { get; } = new() { 1, 2, 3, 4 };
+    public List<int> AvailableYears { get; } = new() { 2024, 2025, 2026, 2027, 2028 };
+
+    [ObservableProperty]
+    private string _filterSummaryText = string.Empty;
 
     [ObservableProperty]
     private RevenueOverviewDto _overview = new();
@@ -211,19 +229,91 @@ public partial class ReportsViewModel : ObservableObject
                 FromDate = new DateTime(now.Year, now.Month, 1);
                 ToDate = now.Date;
                 break;
+            case "THIS_QUARTER":
+                int currentQuarter = (now.Month - 1) / 3 + 1;
+                int qStartMonth = (currentQuarter - 1) * 3 + 1;
+                FromDate = new DateTime(now.Year, qStartMonth, 1);
+                ToDate = now.Date;
+                break;
+            case "BY_MONTH":
+                UpdateDatesFromMonth();
+                break;
+            case "BY_QUARTER":
+                UpdateDatesFromQuarter();
+                break;
             case "CUSTOM":
                 break;
         }
+        UpdateFilterSummary();
         LoadCurrentTab();
+    }
+
+    private void UpdateDatesFromMonth()
+    {
+        int days = DateTime.DaysInMonth(SelectedYear, SelectedMonth);
+        FromDate = new DateTime(SelectedYear, SelectedMonth, 1);
+        ToDate = new DateTime(SelectedYear, SelectedMonth, days);
+    }
+
+    private void UpdateDatesFromQuarter()
+    {
+        int startMonth = (SelectedQuarter - 1) * 3 + 1;
+        int endMonth = startMonth + 2;
+        int days = DateTime.DaysInMonth(SelectedYear, endMonth);
+        FromDate = new DateTime(SelectedYear, startMonth, 1);
+        ToDate = new DateTime(SelectedYear, endMonth, days);
+    }
+
+    private void UpdateFilterSummary()
+    {
+        FilterSummaryText = $"Khoảng ngày: {FromDate:dd/MM/yyyy} ➔ {ToDate:dd/MM/yyyy}";
+    }
+
+    partial void OnSelectedMonthChanged(int value)
+    {
+        if (SelectedPreset == "BY_MONTH")
+        {
+            UpdateDatesFromMonth();
+            UpdateFilterSummary();
+            LoadCurrentTab();
+        }
+    }
+
+    partial void OnSelectedQuarterChanged(int value)
+    {
+        if (SelectedPreset == "BY_QUARTER")
+        {
+            UpdateDatesFromQuarter();
+            UpdateFilterSummary();
+            LoadCurrentTab();
+        }
+    }
+
+    partial void OnSelectedYearChanged(int value)
+    {
+        if (SelectedPreset == "BY_MONTH")
+        {
+            UpdateDatesFromMonth();
+            UpdateFilterSummary();
+            LoadCurrentTab();
+        }
+        else if (SelectedPreset == "BY_QUARTER")
+        {
+            UpdateDatesFromQuarter();
+            UpdateFilterSummary();
+            LoadCurrentTab();
+        }
     }
 
     partial void OnFromDateChanged(DateTime value)
     {
+        UpdateFilterSummary();
         if (SelectedPreset == "CUSTOM") LoadCurrentTab();
     }
 
     partial void OnToDateChanged(DateTime value)
     {
+        UpdateFilterSummary();
         if (SelectedPreset == "CUSTOM") LoadCurrentTab();
     }
 
@@ -287,58 +377,119 @@ public partial class ReportsViewModel : ObservableObject
                 return;
             }
 
+            string fileSuffix;
+            if (SelectedPreset == "TODAY")
+                fileSuffix = $"HomNay_{DateTime.Now:yyyyMMdd}";
+            else if (SelectedPreset == "THIS_WEEK")
+                fileSuffix = $"TuanNay_{FromDate:yyyyMMdd}_den_{ToDate:yyyyMMdd}";
+            else if (SelectedPreset == "THIS_MONTH")
+                fileSuffix = $"ThangNay_{FromDate:yyyyMMdd}_den_{ToDate:yyyyMMdd}";
+            else if (SelectedPreset == "THIS_QUARTER")
+                fileSuffix = $"QuyNay_{FromDate:yyyyMMdd}_den_{ToDate:yyyyMMdd}";
+            else if (SelectedPreset == "BY_MONTH")
+                fileSuffix = $"Thang{SelectedMonth:D2}_{SelectedYear}";
+            else if (SelectedPreset == "BY_QUARTER")
+                fileSuffix = $"Quy{SelectedQuarter}_{SelectedYear}";
+            else
+                fileSuffix = $"{FromDate:yyyyMMdd}_den_{ToDate:yyyyMMdd}";
+
             var sfd = new SaveFileDialog
             {
                 Title = "Xuất Dữ Liệu Doanh Thu Chi Tiết (Data Analyst)",
-                Filter = "File Excel / CSV (*.csv)|*.csv|All Files (*.*)|*.*",
-                FileName = $"BaoCao_DoanhThu_ChiTiet_JBillard_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+                Filter = "File Excel (*.xlsx)|*.xlsx|File CSV (*.csv)|*.csv",
+                FileName = $"BaoCao_DoanhThu_ChiTiet_JBillard_{fileSuffix}_{DateTime.Now:HHmmss}.xlsx"
             };
 
             if (sfd.ShowDialog() == true)
             {
-                var sb = new StringBuilder();
-                sb.AppendLine("Mã Hóa Đơn,Ngày,Giờ,Khung Giờ,Ca Trực,Thu Ngân,Số Bàn,Loại Bàn,Khu Vực,Tầng,Giờ Bắt Đầu,Giờ Kết Thúc,Thời Gian Chơi (Phút),Tiền Giờ (VNĐ),Gói Combo,Loại Khách Hàng,Tên Khách Hàng,Số Điện Thoại,Hạng Thành Viên,Điểm Tích Lũy,Điểm Đã Tiêu,Tên Món F&B,Nhóm Món,Số Lượng,Đơn Giá (VNĐ),Thành Tiền Món (VNĐ),Món Thuộc Combo,Tiền Dịch Vụ (VNĐ),Giảm Giá (%),Tiền Giảm Trừ (VNĐ),Giảm Trừ Điểm (VNĐ),Tổng Tiền Hóa Đơn (VNĐ),Hình Thức Thanh Toán");
-
-                foreach (var row in data)
+                var exportList = data.Select(row => new Dictionary<string, object?>
                 {
-                    sb.AppendLine(string.Join(",",
-                        EscapeCsv(row.InvoiceCode),
-                        EscapeCsv(row.DateStr),
-                        EscapeCsv(row.TimeStr),
-                        EscapeCsv(row.HourSlot),
-                        EscapeCsv(row.ShiftId?.ToString() ?? "N/A"),
-                        EscapeCsv(row.CashierName),
-                        EscapeCsv(row.TableNumber),
-                        EscapeCsv(row.TableType),
-                        EscapeCsv(row.AreaName),
-                        EscapeCsv(row.FloorName),
-                        EscapeCsv(row.StartTime?.ToString("dd/MM/yyyy HH:mm:ss") ?? ""),
-                        EscapeCsv(row.EndTime?.ToString("dd/MM/yyyy HH:mm:ss") ?? ""),
-                        row.PlayMinutes,
-                        row.TimeAmount,
-                        EscapeCsv(row.AppliedComboName),
-                        EscapeCsv(row.CustomerType),
-                        EscapeCsv(row.CustomerName),
-                        EscapeCsv(row.CustomerPhone),
-                        EscapeCsv(row.MembershipTier),
-                        row.PointsEarned,
-                        row.PointsUsed,
-                        EscapeCsv(row.ItemName),
-                        EscapeCsv(row.ItemCategory),
-                        row.ItemQuantity,
-                        row.ItemUnitPrice,
-                        row.ItemTotalAmount,
-                        row.IsComboItem ? "Có" : "Không",
-                        row.ServiceAmount,
-                        row.DiscountPercent,
-                        row.DiscountAmount,
-                        row.PointsDiscountAmount,
-                        row.InvoiceFinalAmount,
-                        EscapeCsv(row.PaymentMethod)
-                    ));
-                }
+                    ["Mã Hóa Đơn"] = row.InvoiceCode,
+                    ["Ngày"] = row.DateStr,
+                    ["Giờ"] = row.TimeStr,
+                    ["Khung Giờ"] = row.HourSlot,
+                    ["Ca Trực"] = row.ShiftId?.ToString() ?? "N/A",
+                    ["Thu Ngân"] = row.CashierName,
+                    ["Số Bàn"] = row.TableNumber,
+                    ["Loại Bàn"] = row.TableType,
+                    ["Khu Vực"] = row.AreaName,
+                    ["Tầng"] = row.FloorName,
+                    ["Giờ Bắt Đầu"] = row.StartTime?.ToString("dd/MM/yyyy HH:mm:ss") ?? "",
+                    ["Giờ Kết Thúc"] = row.EndTime?.ToString("dd/MM/yyyy HH:mm:ss") ?? "",
+                    ["Thời Gian Chơi (Phút)"] = row.PlayMinutes,
+                    ["Tiền Giờ (VNĐ)"] = row.TimeAmount,
+                    ["Gói Combo"] = row.AppliedComboName,
+                    ["Loại Khách Hàng"] = row.CustomerType,
+                    ["Tên Khách Hàng"] = row.CustomerName,
+                    ["Số Điện Thoại"] = row.CustomerPhone,
+                    ["Hạng Thành Viên"] = row.MembershipTier,
+                    ["Điểm Tích Lũy"] = row.PointsEarned,
+                    ["Điểm Đã Tiêu"] = row.PointsUsed,
+                    ["Tên Món F&B"] = row.ItemName,
+                    ["Nhóm Món"] = row.ItemCategory,
+                    ["Số Lượng"] = row.ItemQuantity,
+                    ["Đơn Giá (VNĐ)"] = row.ItemUnitPrice,
+                    ["Thành Tiền Món (VNĐ)"] = row.ItemTotalAmount,
+                    ["Món Thuộc Combo"] = row.IsComboItem ? "Có" : "Không",
+                    ["Tiền Dịch Vụ (VNĐ)"] = row.ServiceAmount,
+                    ["Giảm Giá (%)"] = row.DiscountPercent,
+                    ["Tiền Giảm Trừ (VNĐ)"] = row.DiscountAmount,
+                    ["Giảm Trừ Điểm (VNĐ)"] = row.PointsDiscountAmount,
+                    ["Tổng Tiền Hóa Đơn (VNĐ)"] = row.InvoiceFinalAmount,
+                    ["Hình Thức Thanh Toán"] = row.PaymentMethod
+                }).ToList();
 
-                File.WriteAllText(sfd.FileName, sb.ToString(), new UTF8Encoding(true));
+                if (sfd.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+                {
+                    MiniExcel.SaveAs(sfd.FileName, exportList, overwriteFile: true);
+                }
+                else
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine("sep=,");
+                    sb.AppendLine("Mã Hóa Đơn,Ngày,Giờ,Khung Giờ,Ca Trực,Thu Ngân,Số Bàn,Loại Bàn,Khu Vực,Tầng,Giờ Bắt Đầu,Giờ Kết Thúc,Thời Gian Chơi (Phút),Tiền Giờ (VNĐ),Gói Combo,Loại Khách Hàng,Tên Khách Hàng,Số Điện Thoại,Hạng Thành Viên,Điểm Tích Lũy,Điểm Đã Tiêu,Tên Món F&B,Nhóm Món,Số Lượng,Đơn Giá (VNĐ),Thành Tiền Món (VNĐ),Món Thuộc Combo,Tiền Dịch Vụ (VNĐ),Giảm Giá (%),Tiền Giảm Trừ (VNĐ),Giảm Trừ Điểm (VNĐ),Tổng Tiền Hóa Đơn (VNĐ),Hình Thức Thanh Toán");
+
+                    foreach (var row in data)
+                    {
+                        sb.AppendLine(string.Join(",",
+                            EscapeCsv(row.InvoiceCode),
+                            EscapeCsv(row.DateStr),
+                            EscapeCsv(row.TimeStr),
+                            EscapeCsv(row.HourSlot),
+                            EscapeCsv(row.ShiftId?.ToString() ?? "N/A"),
+                            EscapeCsv(row.CashierName),
+                            EscapeCsv(row.TableNumber),
+                            EscapeCsv(row.TableType),
+                            EscapeCsv(row.AreaName),
+                            EscapeCsv(row.FloorName),
+                            EscapeCsv(row.StartTime?.ToString("dd/MM/yyyy HH:mm:ss") ?? ""),
+                            EscapeCsv(row.EndTime?.ToString("dd/MM/yyyy HH:mm:ss") ?? ""),
+                            row.PlayMinutes,
+                            row.TimeAmount,
+                            EscapeCsv(row.AppliedComboName),
+                            EscapeCsv(row.CustomerType),
+                            EscapeCsv(row.CustomerName),
+                            EscapeCsv(row.CustomerPhone),
+                            EscapeCsv(row.MembershipTier),
+                            row.PointsEarned,
+                            row.PointsUsed,
+                            EscapeCsv(row.ItemName),
+                            EscapeCsv(row.ItemCategory),
+                            row.ItemQuantity,
+                            row.ItemUnitPrice,
+                            row.ItemTotalAmount,
+                            row.IsComboItem ? "Có" : "Không",
+                            row.ServiceAmount,
+                            row.DiscountPercent,
+                            row.DiscountAmount,
+                            row.PointsDiscountAmount,
+                            row.InvoiceFinalAmount,
+                            EscapeCsv(row.PaymentMethod)
+                        ));
+                    }
+
+                    File.WriteAllText(sfd.FileName, sb.ToString(), new UTF8Encoding(true));
+                }
 
                 var res = MessageBox.Show(
                     $"Xuất báo cáo Data Analyst thành công!\nTổng cộng: {data.Count} dòng dữ liệu chi tiết.\nFile lưu tại: {sfd.FileName}\n\nBạn có muốn mở file ngay bây giờ không?",

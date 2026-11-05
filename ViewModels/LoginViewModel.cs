@@ -50,6 +50,15 @@ public partial class LoginViewModel : ObservableObject
                 ErrorMessage = "Tên đăng nhập hoặc mật khẩu không chính xác!";
             }
         }
+        catch (InvalidOperationException ex)
+        {
+            ErrorMessage = ex.Message;
+            System.Windows.MessageBox.Show(
+                ex.Message,
+                "Không Thể Đăng Nhập - Ca Trực Đang Mở",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Warning);
+        }
         catch (Exception ex)
         {
             ErrorMessage = $"Lỗi đăng nhập: {ex.Message}";

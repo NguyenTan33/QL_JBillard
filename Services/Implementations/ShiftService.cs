@@ -11,7 +11,16 @@ public class ShiftService : IShiftService
     private readonly IDbContextFactory<AppDbContext> _contextFactory;
     private readonly IAuditService _auditService;
 
-    public Shift? CurrentActiveShift { get; private set; }
+    private Shift? _currentActiveShift;
+    public Shift? CurrentActiveShift
+    {
+        get
+        {
+            LoadActiveShift();
+            return _currentActiveShift;
+        }
+        private set => _currentActiveShift = value;
+    }
 
     public ShiftService(IDbContextFactory<AppDbContext> contextFactory, IAuditService auditService)
     {
@@ -23,7 +32,7 @@ public class ShiftService : IShiftService
     private void LoadActiveShift()
     {
         using var context = _contextFactory.CreateDbContext();
-        CurrentActiveShift = context.Shifts
+        _currentActiveShift = context.Shifts
                                     .Include(s => s.User)
                                     .Include(s => s.BankDepositSlips)
                                     .OrderByDescending(s => s.ShiftId)
@@ -173,9 +182,9 @@ public class ShiftService : IShiftService
         decimal cashSum = payments.Where(p => p.Method == PaymentMethod.Cash).Sum(p => p.Amount);
         decimal transferSum = payments.Where(p => p.Method == PaymentMethod.VietQr || p.Method == PaymentMethod.BankTransfer).Sum(p => p.Amount);
 
-        // Tính tổng tiền đã nộp ngân hàng trong ca
+        // Tính tổng tiền đã nộp ngân hàng trong ca (Chỉ tính các phiếu đã được Admin duyệt Approved)
         decimal totalDepositsInShift = context.BankDepositSlips
-                                              .Where(b => b.ShiftId == shiftId && b.Status != "Rejected")
+                                              .Where(b => b.ShiftId == shiftId && b.Status == "Approved")
                                               .ToList()
                                               .Sum(b => b.Amount);
 
@@ -224,7 +233,7 @@ public class ShiftService : IShiftService
         int invoiceCount = shiftInvoices.Count;
 
         decimal deposits = context.BankDepositSlips
-                                  .Where(b => b.ShiftId == CurrentActiveShift.ShiftId && b.Status != "Rejected")
+                                  .Where(b => b.ShiftId == CurrentActiveShift.ShiftId && b.Status == "Approved")
                                   .ToList()
                                   .Sum(b => b.Amount);
 
@@ -235,9 +244,41 @@ public class ShiftService : IShiftService
 
     public BankDepositSlip CreateBankDepositSlip(int userId, decimal amount, string? imagePath, string? notes, int? shiftId = null)
     {
+        // 1. Chặn số tiền âm hoặc bằng 0
+        if (amount <= 0)
+        {
+            throw new ArgumentException("Số tiền nộp ngân hàng phải lớn hơn 0 đ!");
+        }
+
         using var context = _contextFactory.CreateDbContext();
 
         int targetShiftId = shiftId ?? CurrentActiveShift?.ShiftId ?? 0;
+
+        // 2. Chặn nộp vượt quá số tiền mặt hiện có trong két của ca
+        if (targetShiftId > 0)
+        {
+            var targetShift = context.Shifts.Find(targetShiftId);
+            if (targetShift != null)
+            {
+                var shiftInvoices = context.Invoices
+                                           .Include(i => i.Payments)
+                                           .Where(i => i.ShiftId == targetShiftId || (i.ShiftId == null && i.CreatedAt >= targetShift.StartTime))
+                                           .ToList();
+                decimal cashInShift = shiftInvoices.SelectMany(i => i.Payments).Where(p => p.Method == PaymentMethod.Cash).Sum(p => p.Amount);
+                decimal approvedDeposits = context.BankDepositSlips
+                                                  .Where(b => b.ShiftId == targetShiftId && b.Status == "Approved")
+                                                  .Select(b => b.Amount)
+                                                  .ToList()
+                                                  .Sum();
+                decimal currentCashInDrawer = targetShift.OpeningCash + cashInShift - approvedDeposits;
+
+                if (amount > currentCashInDrawer)
+                {
+                    throw new InvalidOperationException($"Số tiền nộp ({amount:N0} đ) vượt quá số tiền mặt hiện có trong két ({currentCashInDrawer:N0} đ)!");
+                }
+            }
+        }
+
         int countToday = context.BankDepositSlips.Count(b => b.CreatedAt.Date == DateTime.Today) + 1;
         string slipCode = $"NP-{DateTime.Now:yyyyMMdd}-{countToday:D3}";
 
@@ -245,6 +286,9 @@ public class ShiftService : IShiftService
         var bankNameSetting = context.SystemSettings.FirstOrDefault(s => s.SettingKey == "BankName")?.SettingValue ?? "MBBank (Napas)";
         var bankAccSetting = context.SystemSettings.FirstOrDefault(s => s.SettingKey == "BankAccountNo")?.SettingValue ?? "012345678999";
         var bankNameOwner = context.SystemSettings.FirstOrDefault(s => s.SettingKey == "BankAccountName")?.SettingValue ?? "CLB BIDA J BILLIARDS";
+
+        var user = context.Users.Find(userId);
+        bool isAdmin = user?.Role == UserRole.Admin;
 
         var slip = new BankDepositSlip
         {
@@ -258,7 +302,9 @@ public class ShiftService : IShiftService
             ImagePath = imagePath,
             Notes = notes,
             CreatedAt = DateTime.Now,
-            Status = "Approved" // Mặc định thu ngân nộp là lưu lại
+            Status = "Approved", // Khi thu ngân bấm nộp tiền là tiền chuyển ngay vào tài khoản quán, két trừ ngay lập tức
+            ApprovedByUserId = isAdmin ? userId : null,
+            ApprovedAt = DateTime.Now
         };
 
         context.BankDepositSlips.Add(slip);
@@ -316,6 +362,15 @@ public class ShiftService : IShiftService
         slip.Status = "Approved";
         slip.ApprovedByUserId = adminUserId;
         slip.ApprovedAt = DateTime.Now;
+
+        if (slip.ShiftId.HasValue)
+        {
+            var shift = context.Shifts.Find(slip.ShiftId.Value);
+            if (shift != null)
+            {
+                shift.TotalBankDeposited += slip.Amount;
+            }
+        }
 
         context.SaveChanges();
         _auditService.Log(adminUserId, "APPROVE_DEPOSIT", "BankDepositSlip", slip.DepositSlipId.ToString(), null, $"Admin duyệt phiếu nộp tiền {slip.SlipCode}");

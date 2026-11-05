@@ -53,6 +53,7 @@ public partial class CustomerViewModel : ObservableObject
     private int _editingCustomerId = 0;
 
     public bool IsAdmin => _authService.CurrentUser?.Role == UserRole.Admin;
+    public bool SuppressConfirmation { get; set; } = false;
 
     public CustomerViewModel(
         ICustomerService customerService,
@@ -103,6 +104,9 @@ public partial class CustomerViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void PrepareNewCustomer() => CancelEditCustomer();
+
+    [RelayCommand]
     public void CancelEditCustomer()
     {
         IsEditingCustomer = false;
@@ -140,13 +144,16 @@ public partial class CustomerViewModel : ObservableObject
             return;
         }
 
-        var confirm = MessageBox.Show(
-            $"Bạn có chắc chắn muốn xóa hội viên '{customer.FullName}' ({customer.PhoneNumber}) khỏi hệ thống không?",
-            "Xác Nhận Xóa Hội Viên",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
+        if (!SuppressConfirmation)
+        {
+            var confirm = MessageBox.Show(
+                $"Bạn có chắc chắn muốn xóa hội viên '{customer.FullName}' ({customer.PhoneNumber}) khỏi hệ thống không?",
+                "Xác Nhận Xóa Hội Viên",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
 
-        if (confirm != MessageBoxResult.Yes) return;
+            if (confirm != MessageBoxResult.Yes) return;
+        }
 
         try
         {
@@ -187,14 +194,17 @@ public partial class CustomerViewModel : ObservableObject
         var existing = _customerService.FindByPhone(phone);
         if (!IsAdmin)
         {
-            if (existing != null)
+            if (IsEditingCustomer || existing != null)
             {
-                Message = $"⚠️ Số điện thoại {phone} đã là hội viên ({existing.FullName})! Thu ngân chỉ được thêm hội viên mới, không có quyền sửa.";
-                MessageBox.Show(
-                    $"Số điện thoại {phone} đã đăng ký hội viên cho '{existing.FullName}'!\n\nThu ngân chỉ có quyền đăng ký hội viên mới hoặc tra cứu. Chỉ Quản trị viên (Admin) mới có quyền chỉnh sửa thông tin hội viên.",
-                    "Không Có Quyền Chỉnh Sửa",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                Message = $"⚠️ Thu ngân chỉ có quyền đăng ký thêm mới hội viên, không có quyền sửa thông tin!";
+                if (!SuppressConfirmation)
+                {
+                    MessageBox.Show(
+                        $"Số điện thoại {phone} đã đăng ký hội viên cho '{existing?.FullName ?? "khách"}'!\n\nThu ngân chỉ có quyền đăng ký thêm mới hội viên hoặc tra cứu tích điểm. Chỉ Quản trị viên (Admin) mới có quyền chỉnh sửa hoặc xóa thông tin hội viên.",
+                        "Không Có Quyền Chỉnh Sửa",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
                 return;
             }
         }
@@ -203,23 +213,27 @@ public partial class CustomerViewModel : ObservableObject
             // Admin đang ở chế độ thêm mới nhưng gõ trúng SĐT đã có
             if (!IsEditingCustomer && existing != null)
             {
-                var ask = MessageBox.Show(
-                    $"Số điện thoại {phone} đã thuộc về hội viên '{existing.FullName}'!\n\nBạn có muốn cập nhật thông tin cho hội viên này không?",
-                    "Hội Viên Đã Tồn Tại",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-                if (ask != MessageBoxResult.Yes) return;
+                if (!SuppressConfirmation)
+                {
+                    var ask = MessageBox.Show(
+                        $"Số điện thoại {phone} đã thuộc về hội viên '{existing.FullName}'!\n\nBạn có muốn cập nhật thông tin cho hội viên này không?",
+                        "Hội Viên Đã Tồn Tại",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+                    if (ask != MessageBoxResult.Yes) return;
+                }
             }
         }
 
         try
         {
             var customer = _customerService.CreateOrUpdateCustomer(phone, fullName, FormNotes);
-            Message = IsEditingCustomer 
+            string successMsg = IsEditingCustomer 
                 ? $"✅ Đã cập nhật thông tin hội viên {customer.FullName} thành công!" 
                 : $"✅ Đã thêm mới hội viên {customer.FullName} thành công!";
             
             CancelEditCustomer();
+            Message = successMsg;
             SearchCustomers();
         }
         catch (Exception ex)

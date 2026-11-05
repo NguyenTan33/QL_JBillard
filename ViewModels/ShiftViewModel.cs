@@ -143,9 +143,64 @@ public partial class ShiftViewModel : ObservableObject
     [ObservableProperty]
     private string? _message;
 
-    // --- DANH SÁCH PHIẾU NỘP TIỀN NGÂN HÀNG ---
+    // --- DANH SÁCH PHIẾU NỘP TIỀN NGÂN HÀNG & BỘ LỌC ADMIN ---
     [ObservableProperty]
     private ObservableCollection<BankDepositSlip> _bankDepositSlips = new();
+
+    [ObservableProperty]
+    private string _depositFilterPeriod = "TODAY"; // TODAY, THIS_WEEK, THIS_MONTH, ALL, CUSTOM
+
+    [ObservableProperty]
+    private DateTime _depositFilterFromDate = DateTime.Today;
+
+    [ObservableProperty]
+    private DateTime _depositFilterToDate = DateTime.Today;
+
+    [ObservableProperty]
+    private bool _isCustomDepositFilter = false;
+
+    [ObservableProperty]
+    private decimal _filteredDepositTotal = 0;
+
+    [RelayCommand]
+    public void SetDepositFilter(string period)
+    {
+        DepositFilterPeriod = period;
+        IsCustomDepositFilter = period == "CUSTOM";
+
+        DateTime now = DateTime.Now;
+        if (period == "TODAY")
+        {
+            DepositFilterFromDate = now.Date;
+            DepositFilterToDate = now.Date;
+        }
+        else if (period == "THIS_WEEK")
+        {
+            int diff = (7 + (now.DayOfWeek - DayOfWeek.Monday)) % 7;
+            DepositFilterFromDate = now.Date.AddDays(-diff);
+            DepositFilterToDate = now.Date;
+        }
+        else if (period == "THIS_MONTH")
+        {
+            DepositFilterFromDate = new DateTime(now.Year, now.Month, 1);
+            DepositFilterToDate = now.Date;
+        }
+        else if (period == "ALL")
+        {
+            DepositFilterFromDate = DateTime.MinValue;
+            DepositFilterToDate = DateTime.MaxValue;
+        }
+
+        LoadBankDepositSlips();
+    }
+
+    [RelayCommand]
+    public void ApplyCustomDepositFilter()
+    {
+        DepositFilterPeriod = "CUSTOM";
+        IsCustomDepositFilter = true;
+        LoadBankDepositSlips();
+    }
 
     public event Action? RequestOpenBankDepositDialog;
     public event Action<List<Table>, Action<Views.Dialogs.ShiftHandoffChoice>>? RequestOccupiedTablesChoice;
@@ -213,15 +268,35 @@ public partial class ShiftViewModel : ObservableObject
 
     public void LoadBankDepositSlips()
     {
-        var slips = _shiftService.GetAllBankDepositSlips();
+        DateTime? from = null;
+        DateTime? to = null;
+
+        if (IsAdmin)
+        {
+            if (DepositFilterPeriod != "ALL")
+            {
+                from = DepositFilterFromDate.Date;
+                to = DepositFilterToDate.Date.AddDays(1).AddTicks(-1);
+            }
+        }
+        else
+        {
+            // Thu ngân không có chức năng lọc nâng cao, chỉ xem phiếu nộp của chính mình hôm nay
+            from = DateTime.Today;
+            to = DateTime.Today.AddDays(1).AddTicks(-1);
+        }
+
+        var slips = _shiftService.GetAllBankDepositSlips(from, to);
         int currentUserId = _authService.CurrentUser?.UserId ?? 0;
 
-        // Admin xem toàn bộ phiếu nộp của cả quán, Thu ngân / User khác chỉ xem phiếu do chính mình lập
+        // Admin xem toàn bộ phiếu nộp theo bộ lọc của cả quán, Thu ngân chỉ xem phiếu do chính mình lập
         if (!IsAdmin)
         {
             slips = slips.Where(s => s.UserId == currentUserId).ToList();
         }
+
         BankDepositSlips = new ObservableCollection<BankDepositSlip>(slips);
+        FilteredDepositTotal = slips.Sum(s => s.Amount);
     }
 
     partial void OnCount500kChanged(int value) => RecalculateFromDenominations();
