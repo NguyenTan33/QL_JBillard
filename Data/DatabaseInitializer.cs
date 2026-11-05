@@ -7,7 +7,7 @@ namespace QL_JBillard.Data;
 
 public static class DatabaseInitializer
 {
-    public static void Initialize(AppDbContext context)
+    public static void Initialize(AppDbContext context, bool seedSampleData = false)
     {
         // Tự động tạo cấu trúc bảng CSDL SQLite nếu chưa tồn tại
         context.Database.EnsureCreated();
@@ -106,14 +106,14 @@ public static class DatabaseInitializer
         if (!context.SystemSettings.Any())
         {
             context.SystemSettings.AddRange(
-                new SystemSetting { SettingKey = "ClubName", SettingValue = "J-BILLIARDS CLUB & LOUNGE", Description = "Tên câu lạc bộ bida" },
-                new SystemSetting { SettingKey = "ClubAddress", SettingValue = "123 Đường Số 9, P. Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh", Description = "Địa chỉ quán" },
-                new SystemSetting { SettingKey = "ClubPhone", SettingValue = "0901.234.567", Description = "Số điện thoại hotline" },
+                new SystemSetting { SettingKey = "ClubName", SettingValue = seedSampleData ? "J-BILLIARDS CLUB & LOUNGE" : "CÂU LẠC BỘ BILLIARDS", Description = "Tên câu lạc bộ bida" },
+                new SystemSetting { SettingKey = "ClubAddress", SettingValue = seedSampleData ? "123 Đường Số 9, P. Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh" : "Chưa cập nhật địa chỉ quán", Description = "Địa chỉ quán" },
+                new SystemSetting { SettingKey = "ClubPhone", SettingValue = seedSampleData ? "0901.234.567" : "0900.000.000", Description = "Số điện thoại hotline" },
                 new SystemSetting { SettingKey = "BankBin", SettingValue = "970422", Description = "Mã định danh ngân hàng (970422 là MBBank)" },
-                new SystemSetting { SettingKey = "BankAccountNo", SettingValue = "012345678999", Description = "Số tài khoản nhận tiền VietQR" },
-                new SystemSetting { SettingKey = "BankAccountName", SettingValue = "CLB BIDA J BILLIARDS", Description = "Tên chủ tài khoản thụ hưởng" },
+                new SystemSetting { SettingKey = "BankAccountNo", SettingValue = seedSampleData ? "012345678999" : "0000000000", Description = "Số tài khoản nhận tiền VietQR" },
+                new SystemSetting { SettingKey = "BankAccountName", SettingValue = seedSampleData ? "CLB BIDA J BILLIARDS" : "CHU TAI KHOAN", Description = "Tên chủ tài khoản thụ hưởng" },
                 new SystemSetting { SettingKey = "AutoBackupIntervalMinutes", SettingValue = "30", Description = "Khoảng thời gian tự động sao lưu CSDL (phút)" },
-                new SystemSetting { SettingKey = "InitialDrawerCash", SettingValue = "1000000", Description = "Tiền két mặc định ban đầu khi mở ca (1.000.000đ)" },
+                new SystemSetting { SettingKey = "InitialDrawerCash", SettingValue = seedSampleData ? "1000000" : "0", Description = "Tiền két mặc định ban đầu khi mở ca" },
                 new SystemSetting { SettingKey = "PointRatePerVnd", SettingValue = "10000", Description = "Số tiền tương ứng 1 điểm tích lũy (10,000đ = 1 điểm)" },
                 new SystemSetting { SettingKey = "PointRedeemValue", SettingValue = "1000", Description = "Giá trị quy đổi 1 điểm khi trừ vào hóa đơn (1 điểm = 1,000đ)" }
             );
@@ -131,7 +131,7 @@ public static class DatabaseInitializer
             var initDrawerSetting = context.SystemSettings.Find("InitialDrawerCash");
             if (initDrawerSetting == null)
             {
-                context.SystemSettings.Add(new SystemSetting { SettingKey = "InitialDrawerCash", SettingValue = "1000000", Description = "Tiền két mặc định ban đầu khi mở ca (1.000.000đ)" });
+                context.SystemSettings.Add(new SystemSetting { SettingKey = "InitialDrawerCash", SettingValue = seedSampleData ? "1000000" : "0", Description = "Tiền két mặc định ban đầu khi mở ca" });
                 context.SaveChanges();
             }
         }
@@ -148,7 +148,7 @@ public static class DatabaseInitializer
                     PasswordHash = SecurityHelper.HashPassword("admin123", adminSalt),
                     Salt = adminSalt,
                     FullName = "Quản Trị Viên",
-                    PhoneNumber = "0909999888",
+                    PhoneNumber = "0900000000",
                     Role = UserRole.Admin,
                     IsActive = true
                 }
@@ -168,7 +168,32 @@ public static class DatabaseInitializer
             context.SaveChanges();
         }
 
-        // 4. Seed Không Gian: Tầng, Khu Vực, Loại Bàn
+        // 4. Seed Đơn Vị Tính phổ thông
+        if (!context.Units.Any())
+        {
+            var uLon = new Unit { UnitName = "Lon" };
+            var uChai = new Unit { UnitName = "Chai" };
+            var uLy = new Unit { UnitName = "Ly" };
+            var uDia = new Unit { UnitName = "Đĩa" };
+            var uGoi = new Unit { UnitName = "Gói" };
+            var uCai = new Unit { UnitName = "Cái" };
+            var uVien = new Unit { UnitName = "Viên" };
+            var uBao = new Unit { UnitName = "Bao" };
+            var uHop = new Unit { UnitName = "Hộp" };
+            var uPhan = new Unit { UnitName = "Phần" };
+            var uThung = new Unit { UnitName = "Thùng" };
+            context.Units.AddRange(uLon, uChai, uLy, uDia, uGoi, uCai, uVien, uBao, uHop, uPhan, uThung);
+            context.SaveChanges();
+        }
+
+        // 5. Nếu không yêu cầu nạp dữ liệu mẫu (bản thương mại cho khách hàng mới), kết thúc khởi tạo ở đây!
+        if (!seedSampleData)
+        {
+            return;
+        }
+
+        // --- CÁC DỮ LIỆU MẪU CHỈ DÙNG CHO DEMO / KIỂM THỬ ---
+        // Seed Không Gian Mẫu: Tầng, Khu Vực, Loại Bàn
         if (!context.Floors.Any())
         {
             var f1 = new Floor { FloorName = "Tầng 1 - Sảnh Chính", OrderIndex = 1 };

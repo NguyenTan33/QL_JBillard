@@ -40,7 +40,7 @@ public static class HackerChaosTest
         // Khởi tạo Database và Seed
         using (var ctx = contextFactory.CreateDbContext())
         {
-            DatabaseInitializer.Initialize(ctx);
+            DatabaseInitializer.Initialize(ctx, seedSampleData: true);
         }
 
         var auditService = new AuditService(contextFactory);

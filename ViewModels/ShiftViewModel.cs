@@ -430,6 +430,15 @@ public partial class ShiftViewModel : ObservableObject
 
     private void CheckOpeningMatch()
     {
+        // Nếu đây là ca đầu tiên của quán mới (chưa từng có ca đóng nào trước đó)
+        bool hasAnyClosedShift = _shiftService.GetLastClosedShift() != null;
+        if (!hasAnyClosedShift)
+        {
+            OpeningDiscrepancyAmount = 0;
+            IsOpeningMatch = true;
+            return;
+        }
+
         OpeningDiscrepancyAmount = FormOpeningCash - PreviousShiftClosingCash;
         IsOpeningMatch = (OpeningDiscrepancyAmount == 0);
     }

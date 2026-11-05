@@ -23,3 +23,5 @@ Backups/
 *.log
 *.tmp
 commit_history.ps1
+BanThuongMai_Commercial/
+*.zip

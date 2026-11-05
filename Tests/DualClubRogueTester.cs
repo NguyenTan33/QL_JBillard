@@ -130,7 +130,7 @@ public static class DualClubRogueTester
         // 1. Khởi tạo Schema 3NF & Cấu hình quán
         using (var ctx = contextFactory.CreateDbContext())
         {
-            DatabaseInitializer.Initialize(ctx);
+            DatabaseInitializer.Initialize(ctx, seedSampleData: true);
 
             // Cập nhật tên quán và thông tin riêng
             var settingName = ctx.SystemSettings.Find("ClubName");

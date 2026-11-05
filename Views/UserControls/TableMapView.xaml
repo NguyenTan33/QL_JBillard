@@ -124,20 +124,42 @@
             </WrapPanel>
         </Border>
 
-        <!-- 3. Sơ đồ các bàn (Grid các Card Bàn Căn Giữa Đều Đặn) -->
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding FilteredTables}" HorizontalAlignment="Center">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <local:TableCardControl Width="285" Height="300" Margin="6" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+        <!-- 3. Sơ đồ các bàn hoặc Trạng thái trống (Empty State) -->
+        <Grid Grid.Row="2">
+            <!-- ScrollViewer hiển thị danh sách các bàn -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Visibility="{Binding TotalTableCount, Converter={StaticResource SmartVisibilityConverter}}">
+                <ItemsControl ItemsSource="{Binding FilteredTables}" HorizontalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <local:TableCardControl Width="285" Height="300" Margin="6" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Hướng dẫn thân thiện khi Quán mới chưa thiết lập bàn -->
+            <Border Background="#FFFFFF" CornerRadius="12" Padding="40" Margin="20"
+                    BorderBrush="#E2E8F0" BorderThickness="1"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Visibility="{Binding TotalTableCount, Converter={StaticResource SmartVisibilityConverter}, ConverterParameter=Inverse}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="12" Direction="270" Opacity="0.06" ShadowDepth="3" Color="Black" />
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="🎱" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,12" />
+                    <TextBlock Text="CHƯA CÓ BÀN CHƠI NÀO TRONG QUÁN" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                    <TextBlock Text="Chào mừng bạn đến với phần mềm Quản Lý Quán Bida! Hiện tại quán chưa có bàn chơi nào." 
+                               FontSize="13.5" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center" Margin="0,0,0,4" />
+                    <TextBlock Text="👉 Vui lòng vào menu 'Quản Lý Bàn &amp; Khu Vực' ở thanh bên trái để tạo Tầng, Khu Vực và thêm các Bàn bida cho quán của bạn." 
+                               FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource AccentEmeraldDarkBrush}" TextAlignment="Center" Margin="0,0,0,16" />
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

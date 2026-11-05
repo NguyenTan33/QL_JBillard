@@ -29,7 +29,7 @@ public static class SystemVerification
         using (var context = contextFactory.CreateDbContext())
         {
             // 1. Khởi tạo CSDL SQLite & Seed Data
-            DatabaseInitializer.Initialize(context);
+            DatabaseInitializer.Initialize(context, seedSampleData: true);
             Console.WriteLine("✅ 1. Khởi tạo CSDL SQLite & Seed Data 3NF thành công!");
             Console.WriteLine($"   - Số bàn đã tạo: {context.Tables.Count()}");
             Console.WriteLine($"   - Số người dùng: {context.Users.Count()}");

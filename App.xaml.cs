@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,6 +53,41 @@ public partial class App : Application
             return;
         }
 
+        if (e.Args.Contains("--seed-demo"))
+        {
+            var demoServices = new ServiceCollection();
+            ConfigureServices(demoServices);
+            using var sp = demoServices.BuildServiceProvider();
+            var contextFactory = sp.GetRequiredService<IDbContextFactory<AppDbContext>>();
+            using var context = contextFactory.CreateDbContext();
+            DatabaseInitializer.Initialize(context, seedSampleData: true);
+            Console.WriteLine("✅ ĐÃ NẠP DỮ LIỆU DEMO MẪU (14 BÀN, 42 MÓN, COMBO, KHUNG GIỜ) THÀNH CÔNG!");
+            Shutdown();
+            return;
+        }
+
+        if (e.Args.Contains("--init-commercial-db"))
+        {
+            string targetDb = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BanThuongMai_Commercial", "AppData", "qlin_billiard.db");
+            string? dir = Path.GetDirectoryName(targetDb);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            if (File.Exists(targetDb)) File.Delete(targetDb);
+
+            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+            optionsBuilder.UseSqlite($"Data Source={targetDb}");
+            using var ctx = new AppDbContext(optionsBuilder.Options);
+            DatabaseInitializer.Initialize(ctx, seedSampleData: false);
+
+            Console.WriteLine($"✅ ĐÃ KHỞI TẠO CSDL BẢN THƯƠNG MẠI TRẮNG 100% TẠI: {targetDb}");
+            Console.WriteLine($"   - Bàn: {ctx.Tables.Count()}");
+            Console.WriteLine($"   - Tầng/Khu vực: {ctx.Floors.Count()} tầng, {ctx.Areas.Count()} khu vực");
+            Console.WriteLine($"   - Món ăn/F&B: {ctx.Products.Count()}");
+            Console.WriteLine($"   - Người dùng: {ctx.Users.Count()} (Chỉ duy nhất tài khoản '{ctx.Users.First().Username}')");
+            Console.WriteLine($"   - Tiền két mặc định: {ctx.SystemSettings.Find("InitialDrawerCash")?.SettingValue} đ");
+            Shutdown();
+            return;
+        }
+
         if (e.Args.Contains("--clean-db"))
         {
             var cleanServices = new ServiceCollection();
@@ -59,9 +95,9 @@ public partial class App : Application
             using var sp = cleanServices.BuildServiceProvider();
             var contextFactory = sp.GetRequiredService<IDbContextFactory<AppDbContext>>();
             using var context = contextFactory.CreateDbContext();
-            DatabaseInitializer.Initialize(context);
-            DatabaseCleaner.ResetAndCleanDatabase(context);
-            Console.WriteLine("✅ ĐÃ XÓA SẠCH DỮ LIỆU CƠ SỞ DỮ LIỆU! TIỀN KÉT BAN ĐẦU: 1.000.000 Đ, CHỈ GIỮ LẠI TÀI KHOẢN ADMIN.");
+            DatabaseInitializer.Initialize(context, seedSampleData: false);
+            DatabaseCleaner.WipeAllToCommercialBlank(context);
+            Console.WriteLine("✅ ĐÃ XÓA SẠCH DỮ LIỆU CƠ SỞ DỮ LIỆU VỀ TRẮNG 100%! CHỈ GIỮ LẠI DUY NHẤT 1 TÀI KHOẢN ADMIN.");
             Shutdown();
             return;
         }
@@ -70,12 +106,12 @@ public partial class App : Application
         ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
 
-        // 1. Tự động khởi tạo cấu trúc CSDL SQLite & Nạp dữ liệu ban đầu chuẩn 3NF
+        // 1. Tự động khởi tạo cấu trúc CSDL SQLite sạch (bản thương mại khách hàng mới)
         using (var scope = _serviceProvider.CreateScope())
         {
             var contextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
             using var context = contextFactory.CreateDbContext();
-            DatabaseInitializer.Initialize(context);
+            DatabaseInitializer.Initialize(context, seedSampleData: false);
         }
 
         // 2. Kích hoạt dịch vụ tự động sao lưu dữ liệu SQLite định kỳ (Mặc định 30 phút hoặc theo cài đặt quán)

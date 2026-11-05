@@ -35,7 +35,7 @@ public static class HackerChaosTest2
 
         using (var ctx = contextFactory.CreateDbContext())
         {
-            DatabaseInitializer.Initialize(ctx);
+            DatabaseInitializer.Initialize(ctx, seedSampleData: true);
         }
 
         var auditService = new AuditService(contextFactory);
