@@ -264,9 +264,16 @@ public class InventoryService : IInventoryService
         var item = context.OrderItems
                           .Include(o => o.Product)
                           .ThenInclude(p => p.InventoryItem)
+                          .Include(o => o.Session)
                           .FirstOrDefault(o => o.OrderItemId == orderItemId);
 
         if (item == null || item.IsCancelled) return false;
+
+        // CHỐNG GIAN LẬN: Phiên chơi đã hoàn tất/thanh toán thì không được phép hủy món
+        if (item.Session != null && item.Session.Status != SessionStatus.Active)
+        {
+            return false;
+        }
 
         // CHỐNG GIAN LẬN KHO: Món tặng kèm theo gói combo không được hủy riêng lẻ để hoàn kho ảo
         if (item.IsComboItem)
@@ -301,6 +308,7 @@ public class InventoryService : IInventoryService
                           .FirstOrDefault(o => o.OrderItemId == orderItemId);
 
         if (item == null || item.IsCancelled) return false;
+        if (item.Session != null && item.Session.Status != SessionStatus.Active) return false;
 
         item.IsCompleted = true;
         item.CompletedAt = DateTime.Now;

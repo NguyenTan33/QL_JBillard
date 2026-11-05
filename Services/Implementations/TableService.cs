@@ -308,7 +308,12 @@ public class TableService : ITableService
 
     public bool SwitchTable(int fromTableId, int toTableId, int userId, string? reason = null)
     {
+        if (fromTableId == toTableId) return false;
+
         using var context = _contextFactory.CreateDbContext();
+        bool hasActiveShift = context.Shifts.Any(s => s.Status == ShiftStatus.Open);
+        if (!hasActiveShift) return false;
+
         var fromTable = context.Tables
                                .Include(t => t.TableType)
                                .FirstOrDefault(t => t.TableId == fromTableId);

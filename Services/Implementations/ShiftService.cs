@@ -81,6 +81,7 @@ public class ShiftService : IShiftService
 
     public Shift StartShift(int userId, decimal openingCash, string? notes = null, bool isDiscrepant = false, string? discrepancyReason = null)
     {
+        if (openingCash < 0) throw new ArgumentException("Tiền két đầu ca không được là số âm!");
         using var context = _contextFactory.CreateDbContext();
         
         // Kiểm tra xem đã có ca nào đang mở chưa (bất kể user nào)
@@ -140,6 +141,7 @@ public class ShiftService : IShiftService
 
     public Shift CloseShift(int shiftId, decimal actualCash, string? notes = null, int? closingUserId = null)
     {
+        if (actualCash < 0) throw new ArgumentException("Số tiền thực đếm chốt ca không được là số âm!");
         using var context = _contextFactory.CreateDbContext();
         var shift = context.Shifts
                            .Include(s => s.User)

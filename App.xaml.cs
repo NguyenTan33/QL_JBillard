@@ -24,6 +24,13 @@ public partial class App : Application
             return;
         }
 
+        if (e.Args.Contains("--dual-club-test"))
+        {
+            Tests.DualClubRogueTester.Run();
+            Shutdown();
+            return;
+        }
+
         if (e.Args.Contains("--test-shift"))
         {
             Tests.ShiftSecurityTest.Run();
